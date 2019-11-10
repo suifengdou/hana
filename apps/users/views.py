@@ -1,3 +1,9 @@
-from django.shortcuts import render
+# coding: utf-8
 
-# Create your views here.
+from django.shortcuts import render, redirect
+from django.views.generic.base import View
+
+
+class IndexView(View):
+    def get(self, request):
+        return redirect('/hana/')

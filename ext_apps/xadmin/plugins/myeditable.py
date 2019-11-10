@@ -16,8 +16,6 @@ from xadmin.views.edit import ModelFormAdminUtil
 from xadmin.views.list import EMPTY_CHANGELIST_VALUE
 from xadmin.layout import FormHelper
 
-from apps.crm.maintenance.models import MaintenanceJudgeInfo
-
 
 class MyEditablePlugin(BaseAdminPlugin):
 
