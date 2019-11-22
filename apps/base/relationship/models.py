@@ -1,3 +1,50 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2019/11/19 20:14
+# @Author  : Hann
+# @Site    :
+# @File    : adminx.py
+# @Software: PyCharm
+
+from db.base_model import BaseModel
 from django.db import models
 
-# Create your models here.
+from apps.base.goods.models import BarCodeInfo, GoodsInfo, SeriesInfo
+from apps.base.company.models import ManuInfo
+
+
+class BarCodeToGoods(BaseModel):
+    ORDER_STATUS = (
+        (0, '取消'),
+        (1, '正常'),
+    )
+    barcode = models.ForeignKey(BarCodeInfo, models.CASCADE, verbose_name='条码')
+    goods = models.ForeignKey(GoodsInfo, models.CASCADE, verbose_name='货品')
+    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='单据状态')
+
+    class Meta:
+        unique_together = ('barcode', 'goods')
+        verbose_name = 'B-关联-条码2货品'
+        verbose_name_plural = verbose_name
+        db_table = 'base_rel_barcode2goods'
+
+    def __str__(self):
+        return '{0}to{1}'.format(self.barcode.barcode, self.goods.goods_name)
+
+
+class SeriesToManu(BaseModel):
+    ORDER_STATUS = (
+        (0, '取消'),
+        (1, '正常'),
+    )
+    series = models.ForeignKey(SeriesInfo, models.CASCADE, verbose_name='货品系列')
+    manufactory = models.ForeignKey(ManuInfo, models.CASCADE, verbose_name='工厂')
+    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='单据状态')
+
+    class Meta:
+        unique_together = ('manufactory', 'series')
+        verbose_name = 'B-关联-货品系列2工厂'
+        verbose_name_plural = verbose_name
+        db_table = 'base_rel_series2manu'
+
+    def __str__(self):
+        return '{0}to{1}'.format(self.series.s_name, self.manufactory.company_name)

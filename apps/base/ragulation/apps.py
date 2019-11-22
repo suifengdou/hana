@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class RagulationConfig(AppConfig):
-    name = 'ragulation'
+    name = 'apps.base.ragulation'
+    verbose_name = 'BASE-规则'

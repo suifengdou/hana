@@ -18,7 +18,7 @@ class CompanyInfo(BaseModel):
         (1, '正常'),
     )
     CATEGORY = (
-        (0, '小狗体系'),
+        (0, '本埠主体'),
         (1, '物流快递'),
         (2, '仓库存储'),
         (3, '生产制造'),
@@ -26,9 +26,9 @@ class CompanyInfo(BaseModel):
     )
 
     company_name = models.CharField(unique=True, max_length=30, verbose_name='公司简称', db_index=True)
-    company = models.CharField(null=True, blank=True, max_length=60, verbose_name='公司名称')
+    company = models.CharField(null=True, blank=True, max_length=60, verbose_name='公司全称')
     tax_fil_number = models.CharField(unique=True, null=True, blank=True, max_length=30, verbose_name='税号')
-    status = models.IntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
+    order_status = models.IntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
     category = models.IntegerField(choices=CATEGORY, default=1, verbose_name='公司类型')
 
     class Meta:
@@ -64,6 +64,16 @@ class ManuInfo(CompanyInfo):
 class WareInfo(CompanyInfo):
     class Meta:
         verbose_name = 'BASE-公司-仓库存储'
+        verbose_name_plural = verbose_name
+        proxy = True
+
+    def __str__(self):
+        return self.company_name
+
+
+class MineInfo(CompanyInfo):
+    class Meta:
+        verbose_name = 'BASE-公司-本埠主体'
         verbose_name_plural = verbose_name
         proxy = True
 

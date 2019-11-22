@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     'crispy_forms',
     'apps.base.company.apps.CompanyConfig',
     'apps.base.department.apps.DepartmentConfig',
+    'apps.base.goods.apps.GoodsConfig',
+    'apps.base.relationship.apps.RelationshipConfig',
+    'apps.base.shop.apps.ShopConfig',
+    'apps.base.ragulation.apps.RagulationConfig',
 ]
 
 AUTH_USER_MODEL = "users.UserProfile"
