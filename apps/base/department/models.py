@@ -4,6 +4,8 @@
 
 from django.db import models
 import django.utils.timezone as timezone
+from django.db.models import Sum, Avg, Min, Max
+
 import pandas as pd
 
 from db.base_model import BaseModel
@@ -24,17 +26,25 @@ class DepartmentInfo(BaseModel):
     category = models.IntegerField(choices=CATEGORY, default=1, verbose_name='部门类型')
 
     class Meta:
-        verbose_name = 'B-部门查询'
+        verbose_name = 'B-本部门'
         verbose_name_plural = verbose_name
         db_table = 'base_department'
 
     def __str__(self):
         return self.name
 
+    def quotavalid(self):
+        quota = self.quotadeinfo_set.all().filter(order_status=1).aggregate(Sum("quota"))['quota__sum']
+        if quota:
+            return quota
+        else:
+            return 0
+    quotavalid.short_description = '运维额度'
 
-class DepartmentCreateInfo(DepartmentInfo):
+
+class DepartmentOperationInfo(DepartmentInfo):
 
     class Meta:
-        verbose_name = 'B-部门'
+        verbose_name = 'B-部门查询'
         verbose_name_plural = verbose_name
         proxy = True

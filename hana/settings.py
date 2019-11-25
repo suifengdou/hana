@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'apps.base.relationship.apps.RelationshipConfig',
     'apps.base.shop.apps.ShopConfig',
     'apps.base.ragulation.apps.RagulationConfig',
+    'apps.base.warehouse.apps.WarehosueConfig',
 ]
 
 AUTH_USER_MODEL = "users.UserProfile"
@@ -124,6 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
 LANGUAGE_CODE = 'zh-hans'
+# LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Asia/Shanghai'
 
@@ -131,8 +133,8 @@ USE_I18N = True
 
 USE_L10N = True
 
+# 设置是否启用时区
 USE_TZ = False
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/

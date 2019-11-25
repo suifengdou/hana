@@ -19,19 +19,12 @@ from xadmin.plugins.actions import BaseActionView
 from xadmin.views.base import filter_hook
 from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
+from xadmin.views.edit import ModelFormAdminView
 
-from .models import DepartmentInfo, DepartmentCreateInfo
-from apps.base.ragulation.models import QuotaDeValidInfo
+from .models import DepartmentInfo, DepartmentOperationInfo
+
 
 ACTION_CHECKBOX_NAME = '_selected_action'
-
-
-class QuotaDeValidInline(object):
-    model = QuotaDeValidInfo
-    extra = 0
-    style = 'table'
-    exclude = ['department', 'category', 'creator', 'create_time', 'is_delete']
-    # readonly_fields = ['quota_name', 'maturity', 'quota', 'order_status']
 
 
 class RejectSelectedAction(BaseActionView):
@@ -117,7 +110,7 @@ class RejectSelectedAction(BaseActionView):
 
 
 class DepartmentInfoAdmin(object):
-    list_display = ['name', 'order_status', 'category', 'create_time', 'creator']
+    list_display = ['name', 'order_status', 'category','quotavalid', 'create_time', 'creator']
     list_filter = ['category']
     search_fields = ['name']
     form_layout = [
@@ -126,17 +119,20 @@ class DepartmentInfoAdmin(object):
         Fieldset(None,
                  'creator', 'is_delete', **{"style": "display:None"}),
     ]
-    actions = [RejectSelectedAction]
 
-    def save_models(self):
-        obj = self.new_obj
-        request = self.request
-        obj.creator = request.user.username
-        obj.save()
-        super().save_models()
+    def queryset(self):
+        if self.request.user.department:
+            queryset = super(DepartmentInfoAdmin, self).queryset()
+            queryset = queryset.filter(name=self.request.user.department.name)
+            return queryset
+        else:
+            self.message_user("{}没有设置部门，请设置部门再查询".format(self.request.user.username))
+            queryset = super(DepartmentInfoAdmin, self).queryset().filter(order_status=9)
+            return queryset
 
 
-class DepartmentCreateInfoAdmin(object):
+
+class DepartmentOperationInfoAdmin(object):
     list_display = ['name', 'order_status', 'category', 'create_time', 'creator']
     list_filter = ['category']
     search_fields = ['name']
@@ -147,8 +143,15 @@ class DepartmentCreateInfoAdmin(object):
                  'create_time', 'order_status', 'creator', 'is_delete', **{"style": "display:None"}),
     ]
     readonly_fields = ['name', 'order_status', 'category', 'create_time', 'creator']
-    inlines = [QuotaDeValidInline, ]
+    actions = [RejectSelectedAction]
+
+    def save_models(self):
+        obj = self.new_obj
+        request = self.request
+        obj.creator = request.user.username
+        obj.save()
+        super().save_models()
 
 
-xadmin.site.register(DepartmentCreateInfo, DepartmentCreateInfoAdmin)
 xadmin.site.register(DepartmentInfo, DepartmentInfoAdmin)
+xadmin.site.register(DepartmentOperationInfo, DepartmentOperationInfoAdmin)

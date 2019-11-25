@@ -46,5 +46,3 @@ class QuotaDeValidInfo(QuotaDeInfo):
         proxy = True
 
 
-
-

@@ -53,6 +53,7 @@ class QuotaDeValidInfoAdmin(object):
     list_display = ['order_status', 'maturity', 'quota_name', 'department', 'quota', 'category', 'creator', 'create_time']
     list_filter = ['department', 'maturity', 'quota', 'category', 'create_time']
     search_fields = ['quota_name']
+    date_hierarchy = 'maturity'
     form_layout = [
         Fieldset('必填信息',
                  'quota_name', 'department', 'quota', 'maturity', 'category', 'order_status'),
