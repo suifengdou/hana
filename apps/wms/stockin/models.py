@@ -1,3 +1,165 @@
-from django.db import models
+# -*- coding:  utf-8 -*-
+# @Time    :  2019/5/11 13: 47
+# @Author  :  Hann
+# @Site    :
+# @File    :  models.py
+# @Software:  PyCharm
 
-# Create your models here.
+from django.db import models
+import django.utils.timezone as timezone
+import pandas as pd
+
+from db.base_model import BaseModel
+from apps.base.company.models import ManuInfo, MineInfo
+from apps.base.warehouse.models import WarehouseInfo
+from apps.base.goods.models import GoodsInfo
+from apps.oms.purchase.models import PurchaseInfo
+
+
+class OriStockInInfo(BaseModel):
+
+    ORDER_STATUS = (
+        (0, '已取消'),
+        (1, '未处理'),
+        (2, '已处理'),
+    )
+
+    MISTAKE_TAG = (
+        (0, '正常'),
+        (1, '工厂错误'),
+        (2, '货主错误'),
+        (3, '仓库错误'),
+        (4, '货品错误'),
+        (5, '采购单错误'),
+        (5, '采购单数量错误'),
+    )
+
+    order_category = models.CharField(max_length=60, verbose_name='单据类型')
+    to_organization = models.CharField(max_length=60, null=True, blank=True, verbose_name='对应组织')
+    order_creator = models.CharField(max_length=60, verbose_name='创建人')
+    supplier = models.CharField(max_length=60, verbose_name='供货方')
+    supplier_address = models.CharField(max_length=60, null=True, blank=True, verbose_name='供货方地址')
+    create_time = models.DateTimeField(max_length=60, verbose_name='创建日期')
+    seller = models.CharField(max_length=60, verbose_name='结算方')
+    bs_category = models.CharField(max_length=60, verbose_name='业务类型')
+    stockin_order_id = models.CharField(max_length=60, verbose_name='单据编号')
+    last_modifier = models.CharField(max_length=60, verbose_name='最后修改人')
+    payee = models.CharField(max_length=60, verbose_name='收款方')
+    stockin_time = models.DateTimeField(max_length=60, verbose_name='入库日期')
+    last_modify_time = models.DateTimeField(max_length=60, verbose_name='最后修改日期')
+    consignee = models.CharField(max_length=60, verbose_name='收料组织')
+    ownership = models.CharField(max_length=60, verbose_name='货主')
+    is_cancel = models.CharField(max_length=60, verbose_name='作废状态')
+    purchaser = models.CharField(max_length=60, verbose_name='采购组织')
+    status = models.CharField(max_length=60, verbose_name='单据状态')
+    demander = models.CharField(max_length=60, verbose_name='需求组织')
+    goods_id = models.CharField(max_length=60, verbose_name='物料编码')
+    goods_name = models.CharField(max_length=60, verbose_name='物料名称')
+    goods_size = models.CharField(max_length=60, verbose_name='规格型号')
+    goods_unit = models.CharField(max_length=60, verbose_name='库存单位')
+    quantity_receivable = models.IntegerField(verbose_name='应收数量')
+    quantity_received = models.IntegerField(verbose_name='实收数量')
+    batch_number = models.CharField(max_length=60, verbose_name='批号')
+    warehouse = models.CharField(max_length=60, verbose_name='仓库')
+    expiry_date = models.DateTimeField(max_length=60, verbose_name='有效期至')
+    available_status = models.DateTimeField(max_length=60, verbose_name='生产日期')
+    memorandum = models.CharField(max_length=60, null=True, blank=True, verbose_name='备注')
+    origin_order_category = models.CharField(max_length=60, verbose_name='源单类型')
+    origin_order_id = models.CharField(max_length=60, verbose_name='源单编号')
+    payable_quantity = models.IntegerField(verbose_name='关联应付数量（计价基本）')
+    purchase_order_id = models.CharField(max_length=60, verbose_name='订单单号')
+    assist_quantity = models.IntegerField(verbose_name='实收数量(辅单位)')
+    multiple = models.IntegerField(verbose_name='主/辅换算率')
+
+    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='订单状态')
+    mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='订单状态')
+
+    class Meta:
+        verbose_name = 'wms-s-原始入库单查询'
+        verbose_name_plural = verbose_name
+        db_table = 'wms_s_oristockin'
+
+    def __str__(self):
+        return self.purchase_order_id
+
+
+class OriStockInPending(OriStockInInfo):
+
+    class Meta:
+        verbose_name = 'wms-未审核原始入库单'
+        verbose_name_plural = verbose_name
+        proxy =True
+
+
+class StockInInfo(BaseModel):
+    ORDER_STATUS = (
+        (0, '已取消'),
+        (1, '未处理'),
+        (2, '已处理'),
+    )
+
+    MISTAKE_TAG = (
+        (0, '正常'),
+        (1, '工厂错误'),
+        (2, '货主错误'),
+        (3, '仓库错误'),
+        (4, '货品错误'),
+        (5, '采购单错误'),
+        (5, '采购单数量错误'),
+    )
+
+    order_category = models.CharField(max_length=60, verbose_name='单据类型')
+    to_organization = models.CharField(max_length=60, null=True, blank=True, verbose_name='对应组织')
+    order_creator = models.CharField(max_length=60, verbose_name='创建人')
+    supplier = models.ForeignKey(ManuInfo, on_delete=models.CASCADE, verbose_name='供货方')
+    supplier_address = models.CharField(max_length=60, null=True, blank=True, verbose_name='供货方地址')
+    create_time = models.DateTimeField(max_length=60, verbose_name='创建日期')
+    seller = models.CharField(max_length=60, verbose_name='结算方')
+    bs_category = models.CharField(max_length=60, verbose_name='业务类型')
+    stockin_order_id = models.CharField(max_length=60, verbose_name='单据编号')
+    last_modifier = models.CharField(max_length=60, verbose_name='最后修改人')
+    payee = models.CharField(max_length=60, verbose_name='收款方')
+    stockin_time = models.DateTimeField(max_length=60, verbose_name='入库日期')
+    last_modify_time = models.DateTimeField(max_length=60, verbose_name='最后修改日期')
+    consignee = models.CharField(max_length=60, verbose_name='收料组织')
+    ownership = models.ForeignKey(MineInfo, on_delete=models.CASCADE, verbose_name='货主')
+    is_cancel = models.CharField(max_length=60, verbose_name='作废状态')
+    purchaser = models.CharField(max_length=60, verbose_name='采购组织')
+    status = models.CharField(max_length=60, verbose_name='单据状态')
+    demander = models.CharField(max_length=60, verbose_name='需求组织')
+    goods_id = models.CharField(max_length=60, verbose_name='物料编码')
+    goods_name = models.ForeignKey(GoodsInfo, on_delete=models.CASCADE, verbose_name='物料名称')
+    goods_size = models.CharField(max_length=60, verbose_name='规格型号')
+    goods_unit = models.CharField(max_length=60, verbose_name='库存单位')
+    quantity_receivable = models.IntegerField(verbose_name='应收数量')
+    quantity_received = models.IntegerField(verbose_name='实收数量')
+    batch_number = models.CharField(max_length=60, verbose_name='批号')
+    warehouse = models.ForeignKey(WarehouseInfo, on_delete=models.CASCADE, verbose_name='仓库')
+    expiry_date = models.DateTimeField(max_length=60, verbose_name='有效期至')
+    available_status = models.DateTimeField(max_length=60, verbose_name='生产日期')
+    memorandum = models.CharField(max_length=60, null=True, blank=True, verbose_name='备注')
+    origin_order_category = models.CharField(max_length=60, verbose_name='源单类型')
+    origin_order_id = models.CharField(max_length=60, verbose_name='源单编号')
+    payable_quantity = models.IntegerField(verbose_name='关联应付数量（计价基本）')
+    purchase_order_id = models.ForeignKey(PurchaseInfo, on_delete=models.CASCADE, verbose_name='订单单号')
+    assist_quantity = models.IntegerField(verbose_name='实收数量(辅单位)')
+    multiple = models.IntegerField(verbose_name='主/辅换算率')
+
+    quantity_linking = models.IntegerField(verbose_name='关联存货数量')
+    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='订单状态')
+    mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='订单状态')
+
+    class Meta:
+        verbose_name = 'wms-s-入库单'
+        verbose_name_plural = verbose_name
+        db_table = 'wms_s_stockin'
+
+    def __str__(self):
+        return self.purchase_order_id
+
+
+class StockInPending(StockInInfo):
+
+    class Meta:
+        verbose_name = 'wms-s-未审核入库单'
+

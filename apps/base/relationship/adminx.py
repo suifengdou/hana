@@ -40,7 +40,7 @@ class BarCodeToGoodsAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(BarCodeToGoodsAdmin, self).save_models()
 
 
 class SeriesToManuAdmin(object):
@@ -60,7 +60,7 @@ class SeriesToManuAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(SeriesToManuAdmin, self).save_models()
 
 
 class DepartmentToWarehouseAdmin(object):
@@ -80,7 +80,7 @@ class DepartmentToWarehouseAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(DepartmentToWarehouseAdmin, self).save_models()
 
 
 class ManuToWarehouseAdmin(object):
@@ -100,7 +100,7 @@ class ManuToWarehouseAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(ManuToWarehouseAdmin, self).save_models()
 
 
 xadmin.site.register(BarCodeToGoods, BarCodeToGoodsAdmin)

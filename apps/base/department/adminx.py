@@ -150,7 +150,7 @@ class DepartmentOperationInfoAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(DepartmentOperationInfoAdmin, self).save_models()
 
 
 xadmin.site.register(DepartmentInfo, DepartmentInfoAdmin)

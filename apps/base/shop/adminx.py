@@ -39,7 +39,7 @@ class PlatformInfoAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(PlatformInfoAdmin, self).save_models()
 
 
 class ShopInfoAdmin(object):
@@ -59,7 +59,7 @@ class ShopInfoAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(ShopInfoAdmin, self).save_models()
 
 
 xadmin.site.register(PlatformInfo, PlatformInfoAdmin)

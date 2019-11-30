@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'apps.base.shop.apps.ShopConfig',
     'apps.base.ragulation.apps.RagulationConfig',
     'apps.base.warehouse.apps.WarehosueConfig',
+    'apps.base.changelog.apps.ChangelogConfig',
+    'apps.oms.purchase.apps.PurchaseConfig',
 ]
 
 AUTH_USER_MODEL = "users.UserProfile"
@@ -140,5 +142,6 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+sys.path.insert(0, os.path.join(BASE_DIR, 'static'))
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000

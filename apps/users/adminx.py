@@ -13,6 +13,7 @@ class GlobalSettings(object):
     site_footer = 'UltraTool V0.5.1.6'
     menu_style = 'accordion'
 
+
 xadmin.site.register(views.CommAdminView, GlobalSettings)
 
 

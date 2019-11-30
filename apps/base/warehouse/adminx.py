@@ -41,7 +41,7 @@ class WarehouseInfoAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(WarehouseInfoAdmin, self).save_models()
 
 
 class WarehouseGeneralAdmin(object):

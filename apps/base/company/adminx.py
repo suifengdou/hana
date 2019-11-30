@@ -178,7 +178,7 @@ class CompanyInfoAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(CompanyInfoAdmin, self).save_models()
 
 
 

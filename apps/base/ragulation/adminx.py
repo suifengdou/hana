@@ -42,7 +42,7 @@ class QuotaDeInfoAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(QuotaDeInfoAdmin, self).save_models()
 
     def has_add_permission(self):
         # 禁用添加按钮
@@ -66,7 +66,7 @@ class QuotaDeValidInfoAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super().save_models()
+        super(QuotaDeValidInfoAdmin, self).save_models()
 
     def queryset(self):
         queryset = super(QuotaDeValidInfoAdmin, self).queryset()
