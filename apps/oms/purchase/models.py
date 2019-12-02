@@ -13,7 +13,7 @@ from db.base_model import BaseModel
 from apps.base.company.models import ManuInfo
 
 
-class PurchaseInfo(BaseModel):
+class OriPurchaseInfo(BaseModel):
 
     ORDER_STATUS = (
         (0, '已取消'),
@@ -22,7 +22,7 @@ class PurchaseInfo(BaseModel):
 
     purchase_order_id = models.CharField(max_length=50, verbose_name='单据编号')
     purchase_time = models.DateTimeField(max_length=50, verbose_name='采购时间')
-    supplier = models.ForeignKey(ManuInfo, on_delete=models.CASCADE, verbose_name='供应商')
+    supplier = models.CharField(max_length=70, verbose_name='供应商')
     status = models.CharField(max_length=50, verbose_name='单据状态')
     puchaser = models.CharField(max_length=60, verbose_name='采购组织')
     is_cancel = models.CharField(max_length=50, verbose_name='关闭状态')
@@ -38,7 +38,7 @@ class PurchaseInfo(BaseModel):
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='订单状态')
 
     class Meta:
-        verbose_name = 'OMS-采购单'
+        verbose_name = 'OMS-原始采购单'
         verbose_name_plural = verbose_name
         db_table = 'oms_purchase_order'
 
@@ -46,10 +46,10 @@ class PurchaseInfo(BaseModel):
         return self.purchase_order_id
 
 
-class PurchasePending(PurchaseInfo):
+class OriPurchasePending(OriPurchaseInfo):
 
     class Meta:
-        verbose_name = 'OMS-未审核采购单'
+        verbose_name = 'OMS-未审核原始采购单'
         verbose_name_plural = verbose_name
         proxy = True
 
