@@ -13,6 +13,7 @@ from apps.base.company.models import ManuInfo
 from apps.base.department.models import DepartmentInfo
 from apps.base.warehouse.models import WarehouseManu, WarehouseGeneral
 
+
 class BarCodeToGoods(BaseModel):
     ORDER_STATUS = (
         (0, '取消'),

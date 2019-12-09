@@ -42,7 +42,7 @@ class DepartmentInfo(BaseModel):
     quotavalid.short_description = '运维额度'
 
 
-class DepartmentOperationInfo(DepartmentInfo):
+class DepartmentList(DepartmentInfo):
 
     class Meta:
         verbose_name = 'B-部门查询'

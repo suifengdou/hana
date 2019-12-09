@@ -53,6 +53,9 @@ INSTALLED_APPS = [
     'apps.base.warehouse.apps.WarehosueConfig',
     'apps.base.changelog.apps.ChangelogConfig',
     'apps.oms.purchase.apps.PurchaseConfig',
+    'apps.oms.predistribution.apps.PredistributionConfig',
+    'apps.wms.stockin.apps.StockinConfig',
+    'apps.wms.stock.apps.StockConfig',
 ]
 
 AUTH_USER_MODEL = "users.UserProfile"

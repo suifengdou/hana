@@ -21,7 +21,7 @@ from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 from xadmin.views.edit import ModelFormAdminView
 
-from .models import DepartmentInfo, DepartmentOperationInfo
+from .models import DepartmentInfo, DepartmentList
 
 
 ACTION_CHECKBOX_NAME = '_selected_action'
@@ -132,7 +132,7 @@ class DepartmentInfoAdmin(object):
 
 
 
-class DepartmentOperationInfoAdmin(object):
+class DepartmentListAdmin(object):
     list_display = ['name', 'order_status', 'category', 'create_time', 'creator']
     list_filter = ['category']
     search_fields = ['name']
@@ -150,8 +150,8 @@ class DepartmentOperationInfoAdmin(object):
         request = self.request
         obj.creator = request.user.username
         obj.save()
-        super(DepartmentOperationInfoAdmin, self).save_models()
+        super(DepartmentListAdmin, self).save_models()
 
 
 xadmin.site.register(DepartmentInfo, DepartmentInfoAdmin)
-xadmin.site.register(DepartmentOperationInfo, DepartmentOperationInfoAdmin)
+xadmin.site.register(DepartmentList, DepartmentListAdmin)
