@@ -35,6 +35,9 @@ class StockInfo(BaseModel):
         verbose_name_plural = verbose_name
         db_table = 'wms_stock_stock'
 
+    def __str__(self):
+        return str(self.warehouse)
+
 
 class DeptStockInfo(BaseModel):
     ORDER_STATUS = (
@@ -55,4 +58,6 @@ class DeptStockInfo(BaseModel):
         verbose_name_plural = verbose_name
         db_table = 'wms_stock_deptstock'
 
+    def __str__(self):
+        return str(self.vwarehouse)
 

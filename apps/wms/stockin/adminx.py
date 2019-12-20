@@ -9,23 +9,185 @@ import re, datetime
 import pandas as pd
 import xadmin
 
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q, Sum, Count, Avg
+from django.db import router
+from django.utils.encoding import force_text
+from django.template.response import TemplateResponse
+from django.contrib.admin.utils import get_deleted_objects
+
 from xadmin.plugins.actions import BaseActionView
 from xadmin.views.base import filter_hook
 from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 
 from .models import OriStockInPending, OriStockInInfo, StockInInfo
+from apps.base.company.models import ManuInfo
+from apps.base.goods.models import GoodsInfo
+from apps.base.warehouse.models import WarehouseGeneral
+from apps.oms.purchase.models import PurchaseInfo
+from apps.wms.stock.models import StockInfo, DeptStockInfo
 
 ACTION_CHECKBOX_NAME = '_selected_action'
 
 
+# 递交原始入库单
+class OriSIAction(BaseActionView):
+    action_name = "submit_sti_ori"
+    description = "提交选中的订单"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    modify_models_batch = False
+
+    @filter_hook
+    def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                for obj in queryset:
+                    self.log('change', '', obj)
+                    stockin_order = StockInInfo()
+                    pre_warehouse = WarehouseGeneral.objects.filter(warehouse_name=obj.warehouse)
+                    if pre_warehouse.exists():
+                        warehouse = pre_warehouse[0]
+                        stockin_order.warehouse = warehouse
+                    else:
+                        self.message_user("单号%s仓库错误，查看系统是否有此仓库" % obj.stockin_order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 5
+                        obj.save()
+                        continue
+                    q_goods = GoodsInfo.objects.filter(goods_name=obj.goods_name)
+                    if q_goods.exists():
+                        goods = q_goods[0]
+                        stockin_order.goods_name = goods
+                    else:
+                        self.message_user("单号%s货品错误，查看系统是否有此货品" % obj.stockin_order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 4
+                        obj.save()
+                        continue
+                    pre_purchase = PurchaseInfo.objects.filter(purchase_order_id=obj.stockin_order_id, goods_name=goods)
+                    if pre_purchase.exists():
+                        purchase_order = pre_purchase[0]
+                        stockin_order.purchase_order_id = purchase_order
+                    else:
+                        self.message_user("单号%s采购单号错误，查看系统是否有此采购单" % obj.stockin_order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 6
+                        obj.save()
+                        continue
+                    q_supplier = ManuInfo.objects.filter(company_name=obj.supplier)
+                    if q_supplier.exists():
+                        supplier = q_supplier[0]
+                        stockin_order.supplier = supplier
+                    else:
+                        self.message_user("单号%s工厂错误，查看系统是否有此工厂" % obj.stockin_order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 3
+                        obj.save()
+                        continue
+                    repeat_queryset = StockInInfo.objects.filter(stockin_order_id=obj.stockin_order_id,
+                                                                 goods_name=goods, warehouse=warehouse,
+                                                                 purchase_order_id=purchase_order,
+                                                                 expiry_date=obj.expiry_date)
+                    if repeat_queryset.exists():
+                        repeat_order = repeat_queryset[0]
+                        if repeat_order.quantity_receivable < (obj.quantity_received + repeat_order.quantity_received):
+                            repeat_order.quantity_received = obj.quantity_received + repeat_order.quantity_received
+                            stockin_order.quantity_linking = stockin_order.quantity_received
+                            repeat_order.save()
+                            self.message_user("单号%s，合并货品%s" % (obj.stockin_order_id, obj.goods_id), "info")
+                            obj.mistake_tag = 1
+                            obj.order_status = 2
+                            obj.save()
+                            continue
+                        else:
+                            self.message_user("单号%s，重复。货品是%s" % (obj.stockin_order_id, obj.goods_id), "error")
+                            obj.mistake_tag = 2
+                            obj.order_status = 2
+                            obj.save()
+                            continue
+
+                    _quantity_receivable = OriStockInInfo.objects.filter(stockin_order_id=obj.stockin_order_id, goods_id=obj.goods_id, warehouse=obj.warehouse, expiry_date=obj.expiry_date, order_status__in=[1, 2])
+                    _quantity_receivable = _quantity_receivable.aggregate(quantity_receivable=Sum('quantity_received'))
+                    quantity_receivable = _quantity_receivable['quantity_receivable']
+
+                    stockin_order.quantity_receivable = quantity_receivable
+                    fields_list = ['order_category','to_organization','order_creator','supplier_address','create_date','seller','bs_category','stockin_order_id','last_modifier','payee','stockin_time','last_modify_time','consignee','is_cancel','purchaser','status','demander','goods_id','goods_size','goods_unit','quantity_receivable','quantity_received','batch_number','expiry_date','produce_time','memorandum','origin_order_category','origin_order_id','payable_quantity','assist_quantity','multiple','price','storage']
+
+                    for k in fields_list:
+                        if hasattr(obj, k):
+                            setattr(stockin_order, k, getattr(obj, k))  # 更新对象属性对应键值
+                    stockin_order.creator = self.request.user.username
+                    stockin_order.save()
+
+                    obj.order_status = 2
+                    obj.save()
+                    self.message_user("%s 递交完毕" % obj.stockin_order_id, "info")
+
+            self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
+        return None
+
+
+# 递交入库单
+class SIAction(BaseActionView):
+    action_name = "submit_sti_or"
+    description = "提交选中的订单"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    modify_models_batch = False
+
+    @filter_hook
+    def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                for obj in queryset:
+                    self.log('change', '', obj)
+                    if obj.quantity_received == obj.quantity_receivable:
+                        if obj.purchase_order_id.quantity > obj.purchase_order_id.complete_quantity:
+                            obj.purchase_order_id.complete_quantity = obj.purchase_order_id.complete_quantity + obj.quantity_received
+
+                            obj.purchase_order_id.save()
+
+                        obj.order_status = 2
+                        obj.save()
+                        self.message_user("%s 递交完毕" % obj.stockin_order_id, "info")
+                    else:
+                        obj.mistake_tag = 2
+                        obj.save()
+                        self.message_user("%s请递交剩余的原始入库单之后再递交" % obj.stockin_order_id, "info")
+
+            self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
+        return None
+
+
 class OriStockInPendingAdmin(object):
-    list_display = ['order_category', 'supplier', 'create_time', 'stockin_order_id', 'purchaser', 'goods_id',
+    list_display = ['order_category', 'supplier', 'create_date', 'stockin_order_id', 'purchaser', 'goods_id',
                     'goods_name', 'goods_size', 'goods_unit', 'quantity_receivable', 'quantity_received',
                     'warehouse', 'origin_order_id', 'purchase_order_id', ]
     list_filter = []
     search_fields = []
-
+    actions = [OriSIAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -41,7 +203,7 @@ class OriStockInPendingAdmin(object):
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
                 self.message_user('错误提示：%s' % result)
-        return super(OriStockInPendingAdmin, self).post(request, args, kwargs)
+        return super(OriStockInPendingAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
         INIT_FIELDS_DIC = {
@@ -50,7 +212,7 @@ class OriStockInPendingAdmin(object):
             '创建人': 'order_creator',
             '供货方': 'supplier',
             '供货方地址': 'supplier_address',
-            '创建日期': 'create_time',
+            '创建日期': 'create_date',
             '结算方': 'seller',
             '业务类型': 'bs_category',
             '单据编号': 'stockin_order_id',
@@ -88,10 +250,10 @@ class OriStockInPendingAdmin(object):
             '库存单位': 'goods_unit',
             '应收数量': 'quantity_receivable',
             '实收数量': 'quantity_received',
-            '成本价': 'null20',
+            '成本价': 'price',
             '批号': 'batch_number',
             '仓库': 'warehouse',
-            '仓位': 'null21',
+            '仓位': 'storage',
             '仓位.一号库仓位.编码': 'null22',
             '仓位.一号库仓位.名称': 'null23',
             '仓位.十号库仓位.名称': 'null24',
@@ -202,14 +364,20 @@ class OriStockInPendingAdmin(object):
             with pd.ExcelFile(_file) as xls:
                 df = pd.read_excel(xls, sheet_name=0)
                 VERIFY_FIELD = ['单据类型', '对应组织', '创建人', '供货方', '供货方地址', '创建日期', '结算方', '业务类型', '单据编号', '最后修改人', '收款方',
-                                '入库日期', '最后修改日期', '收料组织', '作废状态', '采购组织', '单据状态', '需求组织']
+                                '入库日期', '最后修改日期', '收料组织', '作废状态', '采购组织', '单据状态', '需求组织', '仓位']
                 for i in VERIFY_FIELD:
-                    keyword = None
-                    for j in range(len(df.loc[:, [i]]) - 1):
-                        if str(df.at[j, i]) not in ['nan', 'NaN']:
-                            keyword = df.at[j, i]
-                        else:
-                            df.at[j, i] = keyword
+                    if i == '仓位':
+                        keyword = "100000"
+                        for j in range(len(df.loc[:, [i]]) - 1):
+                            if str(df.at[j, i]) in ['nan', 'NaN']:
+                                df.at[j, i] = keyword
+                    else:
+                        keyword = None
+                        for j in range(len(df.loc[:, [i]]) - 1):
+                            if str(df.at[j, i]) not in ['nan', 'NaN']:
+                                keyword = df.at[j, i]
+                            else:
+                                df.at[j, i] = keyword
                 # 获取表头，对表头进行转换成数据库字段名
                 columns_key = df.columns.values.tolist()
                 for i in range(len(columns_key)):
@@ -263,7 +431,7 @@ class OriStockInPendingAdmin(object):
                 ret_columns_key = dict(zip(columns_key_ori, columns_key))
                 piece.rename(columns=ret_columns_key, inplace=True)
                 _ret_list = piece.to_dict(orient='records')
-                intermediate_report_dic = self.save_resources(_ret_list, creator)
+                intermediate_report_dic = self.save_resources(_ret_list)
                 for k, v in intermediate_report_dic.items():
                     if k == "error":
                         if intermediate_report_dic["error"]:
@@ -294,8 +462,18 @@ class OriStockInPendingAdmin(object):
             stockin_order_id = str(row["stockin_order_id"])
             status = str(row["status"])
             goods_id = str(row["goods_id"])
+            warehouse = str(row['warehouse'])
+            price = row['price']
+            storage = row['storage']
+            batch_number = row['batch_number']
 
-            row['create_time'] = datetime.datetime.strptime(row['create_time'], '%Y/%m/%d')
+            # 如果订单号查询，已经存在，丢弃订单，计数为重复订单
+            if OriStockInInfo.objects.filter(stockin_order_id=stockin_order_id, goods_id=goods_id, warehouse=warehouse, price=price, storage=storage, batch_number=batch_number).exists():
+                report_dic["repeated"] += 1
+                report_dic["error"].append('%s单据重复导入' % stockin_order_id)
+                continue
+
+            row['create_date'] = datetime.datetime.strptime(row['create_date'], '%Y/%m/%d')
             row['stockin_time'] = datetime.datetime.strptime(row['stockin_time'], '%Y/%m/%d')
             row['last_modify_time'] = datetime.datetime.strptime(row['last_modify_time'], '%Y/%m/%d')
             row['produce_time'] = datetime.datetime.strptime(row['produce_time'], '%Y/%m/%d')
@@ -308,11 +486,7 @@ class OriStockInPendingAdmin(object):
                 report_dic["error"].append('%s单据状态错误' % stockin_order_id)
                 continue
 
-            # 如果订单号查询，已经存在，丢弃订单，计数为重复订单
-            if OriStockInInfo.objects.filter(stockin_order_id=stockin_order_id, goods_id=goods_id).exists():
-                report_dic["repeated"] += 1
-                report_dic["error"].append('%s单据重复导入' % stockin_order_id)
-                continue
+
 
             for k, v in row.items():
 
@@ -338,7 +512,11 @@ class OriStockInInfoAdmin(object):
 
 
 class StockInInfoAdmin(object):
-    pass
+    list_display = ['order_category', 'supplier', 'create_date', 'stockin_order_id', 'purchaser', 'goods_id',
+                    'goods_name', 'goods_size', 'goods_unit', 'quantity_receivable', 'quantity_received',
+                    'warehouse', 'origin_order_id', 'purchase_order_id', ]
+
+    actions = [SIAction]
 
 
 xadmin.site.register(OriStockInPending, OriStockInPendingAdmin)
