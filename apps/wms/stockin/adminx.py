@@ -182,10 +182,10 @@ class SIAction(BaseActionView):
 
 
 class OriStockInPendingAdmin(object):
-    list_display = ['order_category', 'supplier', 'create_date', 'stockin_order_id', 'purchaser', 'goods_id',
+    list_display = ['stockin_order_id', 'mistake_tag', 'order_status', 'supplier', 'create_date', 'purchaser', 'goods_id',
                     'goods_name', 'goods_size', 'goods_unit', 'quantity_receivable', 'quantity_received',
                     'warehouse', 'origin_order_id', 'purchase_order_id', ]
-    list_filter = []
+    list_filter = ['mistake_tag', 'supplier', 'goods_id', 'goods_name', 'warehouse', 'origin_order_id', 'purchase_order_id', 'create_date', 'update_time', 'create_time','creator']
     search_fields = []
     actions = [OriSIAction]
     import_data = True
@@ -368,12 +368,12 @@ class OriStockInPendingAdmin(object):
                 for i in VERIFY_FIELD:
                     if i == '仓位':
                         keyword = "100000"
-                        for j in range(len(df.loc[:, [i]]) - 1):
+                        for j in range(len(df.loc[:, [i]])):
                             if str(df.at[j, i]) in ['nan', 'NaN']:
                                 df.at[j, i] = keyword
                     else:
                         keyword = None
-                        for j in range(len(df.loc[:, [i]]) - 1):
+                        for j in range(len(df.loc[:, [i]])):
                             if str(df.at[j, i]) not in ['nan', 'NaN']:
                                 keyword = df.at[j, i]
                             else:
