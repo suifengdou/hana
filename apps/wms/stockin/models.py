@@ -56,7 +56,7 @@ class OriStockInInfo(BaseModel):
     goods_name = models.CharField(max_length=60, verbose_name='物料名称')
     goods_size = models.CharField(max_length=60, verbose_name='规格型号')
     goods_unit = models.CharField(max_length=60, verbose_name='库存单位')
-    quantity_receivable = models.IntegerField(null=True, blank=True, verbose_name='应收数量')
+    quantity_receivable = models.IntegerField(default=0, verbose_name='应收数量')
     quantity_received = models.IntegerField(verbose_name='实收数量')
     batch_number = models.CharField(max_length=60, verbose_name='批号')
     warehouse = models.CharField(max_length=60, verbose_name='仓库')

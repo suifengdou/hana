@@ -156,11 +156,15 @@ class OriPurchasePendingAdmin(object):
                 VERIFY_FIELD = ['单据编号', '采购日期', '供应商', '单据状态', '采购组织', '关闭状态']
                 for i in VERIFY_FIELD:
                     keyword = None
-                    for j in range(len(df.loc[:, [i]])):
-                        if str(df.at[j, i]) not in ['nan', 'NaN', ' ']:
-                            keyword = df.at[j, i]
-                        else:
-                            df.at[j, i] = keyword
+                    try:
+                        for j in range(len(df.loc[:, [i]])):
+                            if str(df.at[j, i]) not in ['nan', 'NaN', ' ']:
+                                keyword = df.at[j, i]
+                            else:
+                                df.at[j, i] = keyword
+                    except Exception as e:
+                        self.message_user('表格错误', 'error')
+                        return '看下自己的表啥情况。'
                 # 获取表头，对表头进行转换成数据库字段名
                 columns_key = df.columns.values.tolist()
                 for i in range(len(columns_key)):

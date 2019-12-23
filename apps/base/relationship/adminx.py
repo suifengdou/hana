@@ -14,7 +14,7 @@ from django.contrib.admin.utils import get_deleted_objects
 
 
 import xadmin
-from .models import BarCodeToGoods, SeriesToManu, DepartmentToWarehouse, ManuToWarehouse
+from .models import BarCodeToGoods, DepartmentToWarehouse, ManuToWarehouse
 from xadmin.plugins.actions import BaseActionView
 from xadmin.views.base import filter_hook
 from xadmin.util import model_ngettext
@@ -104,6 +104,5 @@ class ManuToWarehouseAdmin(object):
 
 
 xadmin.site.register(BarCodeToGoods, BarCodeToGoodsAdmin)
-xadmin.site.register(SeriesToManu, SeriesToManuAdmin)
 xadmin.site.register(DepartmentToWarehouse, DepartmentToWarehouseAdmin)
 xadmin.site.register(ManuToWarehouse, ManuToWarehouseAdmin)

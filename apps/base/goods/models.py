@@ -7,6 +7,7 @@
 
 from django.db import models
 from db.base_model import BaseModel
+from apps.base.company.models import ManuInfo
 
 
 class SeriesInfo(BaseModel):
@@ -123,6 +124,7 @@ class GoodsInfo(BaseModel):
     goods_name = models.CharField(max_length=150, verbose_name='货品名称')
     goods_id = models.CharField(unique=True, max_length=150, verbose_name='货品代码')
     size = models.ForeignKey(SizeInfo, on_delete=models.CASCADE, verbose_name='规格')
+    manufactory = models.ForeignKey(ManuInfo, on_delete=models.CASCADE, verbose_name='工厂')
     series = models.ForeignKey(SeriesInfo, null=True, blank=True, on_delete=models.CASCADE, verbose_name='系列')
     category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='类型')
     e_name = models.CharField(max_length=200, verbose_name='英文名')
@@ -133,8 +135,6 @@ class GoodsInfo(BaseModel):
     memorandum = models.CharField(max_length=360, null=True, blank=True, verbose_name='备注')
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='货品状态')
     package_unit = models.IntegerField(null=True, blank=True, verbose_name='装箱规格')
-
-
 
     class Meta:
         unique_together = ('goods_name', 'size')

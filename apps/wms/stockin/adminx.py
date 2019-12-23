@@ -74,7 +74,7 @@ class OriSIAction(BaseActionView):
                         obj.mistake_tag = 4
                         obj.save()
                         continue
-                    pre_purchase = PurchaseInfo.objects.filter(purchase_order_id=obj.stockin_order_id, goods_name=goods)
+                    pre_purchase = PurchaseInfo.objects.filter(purchase_order_id=obj.purchase_order_id, goods_name=goods)
                     if pre_purchase.exists():
                         purchase_order = pre_purchase[0]
                         stockin_order.purchase_order_id = purchase_order
@@ -102,7 +102,6 @@ class OriSIAction(BaseActionView):
                         repeat_order = repeat_queryset[0]
                         if repeat_order.quantity_receivable < (obj.quantity_received + repeat_order.quantity_received):
                             repeat_order.quantity_received = obj.quantity_received + repeat_order.quantity_received
-                            stockin_order.quantity_linking = stockin_order.quantity_received
                             repeat_order.save()
                             self.message_user("单号%s，合并货品%s" % (obj.stockin_order_id, obj.goods_id), "info")
                             obj.mistake_tag = 1
@@ -123,6 +122,8 @@ class OriSIAction(BaseActionView):
                     stockin_order.quantity_receivable = quantity_receivable
                     fields_list = ['order_category','to_organization','order_creator','supplier_address','create_date','seller','bs_category','stockin_order_id','last_modifier','payee','stockin_time','last_modify_time','consignee','is_cancel','purchaser','status','demander','goods_id','goods_size','goods_unit','quantity_receivable','quantity_received','batch_number','expiry_date','produce_time','memorandum','origin_order_category','origin_order_id','payable_quantity','assist_quantity','multiple','price','storage']
 
+                    purchase_order.complete_quantity += obj.quantity_received
+                    purchase_order.save()
                     for k in fields_list:
                         if hasattr(obj, k):
                             setattr(stockin_order, k, getattr(obj, k))  # 更新对象属性对应键值
