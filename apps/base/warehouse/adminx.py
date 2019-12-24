@@ -28,7 +28,7 @@ class WarehouseInfoAdmin(object):
     list_filter = ['category', 'order_status']
     search_fields = ['warehouse_name']
     relfield_style = 'fk-ajax'
-    model_icon = 'fa fa-university'
+    # model_icon = 'fa fa-university'
     form_layout = [
         Fieldset('必填信息',
                  'warehouse_id','warehouse_name', 'category', 'order_status'),
@@ -49,7 +49,7 @@ class WarehouseGeneralAdmin(object):
     list_filter = ['category', 'order_status']
     search_fields = ['warehouse_name']
     relfield_style = 'fk-ajax'
-    model_icon = 'fa fa-university'
+    # model_icon = 'fa fa-university'
     form_layout = [
         Fieldset('必填信息',
                  'warehouse_id','warehouse_name', 'category', 'order_status'),
@@ -72,7 +72,7 @@ class WarehouseManuAdmin(object):
     list_filter = ['category', 'order_status']
     search_fields = ['warehouse_name']
     relfield_style = 'fk-ajax'
-    model_icon = 'fa fa-university'
+    # model_icon = 'fa fa-university'
     form_layout = [
         Fieldset('必填信息',
                  'warehouse_id','warehouse_name', 'category', 'order_status'),
@@ -95,7 +95,7 @@ class WarehouseVirtualAdmin(object):
     list_filter = ['category', 'order_status']
     search_fields = ['warehouse_name']
     relfield_style = 'fk-ajax'
-    model_icon = 'fa fa-university'
+    # model_icon = 'fa fa-university'
     form_layout = [
         Fieldset('必填信息',
                  'warehouse_id','warehouse_name', 'category', 'order_status'),

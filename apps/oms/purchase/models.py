@@ -49,7 +49,7 @@ class OriPurchaseInfo(BaseModel):
     mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='递交问题原因')
 
     class Meta:
-        verbose_name = 'OMS-原始采购单'
+        verbose_name = 'oms-原始采购单'
         verbose_name_plural = verbose_name
         unique_together = ('purchase_order_id', 'goods_id', 'price')
         db_table = 'oms_purchase_oriorder'
@@ -63,7 +63,7 @@ class OriPurchasePending(OriPurchaseInfo):
                     'quantity', 'delivery_date', 'goods_id', 'goods_name', 'is_gift', 'is_close']
 
     class Meta:
-        verbose_name = 'OMS-未审核原始采购单'
+        verbose_name = 'oms-未审核原始采购单'
         verbose_name_plural = verbose_name
         proxy = True
 
@@ -105,7 +105,7 @@ class PurchaseInfo(BaseModel):
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='订单状态')
 
     class Meta:
-        verbose_name = 'OMS-采购单查询'
+        verbose_name = 'oms-采购单查询'
         verbose_name_plural = verbose_name
         unique_together = ('purchase_order_id', 'goods_id')
         db_table = 'oms_purchase_order'
@@ -117,6 +117,6 @@ class PurchaseInfo(BaseModel):
 class PurchasePending(OriPurchaseInfo):
 
     class Meta:
-        verbose_name = 'OMS-采购单一览'
+        verbose_name = 'oms-采购单一览'
         verbose_name_plural = verbose_name
         proxy = True

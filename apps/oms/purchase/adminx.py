@@ -109,7 +109,7 @@ class OriSMAction(BaseActionView):
 
 class OriPurchasePendingAdmin(object):
     list_display = ['purchase_order_id', 'mistake_tag', 'order_status', 'purchase_time', 'delivery_date' ,'supplier','puchaser','goods_id','goods_name','quantity', 'goods_unit']
-    list_filter = ['purchase_time','mistake_tag','supplier','puchaser','quantity','delivery_date','goods_name',]
+    list_filter = ['mistake_tag','purchase_time','mistake_tag','supplier','puchaser','quantity','delivery_date','goods_name',]
     search_fields = ['purchase_order_id', 'goods_name', 'goods_id']
     actions = [OriSMAction, ]
     import_data = True
@@ -275,6 +275,11 @@ class OriPurchasePendingAdmin(object):
                 report_dic["false"] += 1
         return report_dic
 
+    def queryset(self):
+        queryset = super(OriPurchasePendingAdmin, self).queryset()
+        queryset = queryset.filter(is_delete=0, order_status=1)
+        return queryset
+
 
 class OriPurchaseInfoAdmin(object):
     list_display = ['purchase_order_id', 'purchase_time', 'delivery_date' ,'supplier','puchaser','goods_id','goods_name','quantity', 'goods_unit', 'status',]
@@ -284,6 +289,7 @@ class OriPurchaseInfoAdmin(object):
 
 class PurchaseInfoAdmin(object):
     list_display = ['purchase_order_id','purchase_time','status','goods_name','goods_id','goods_unit','quantity','complete_quantity','price','delivery_date','supplier']
+    list_filter = ['purchase_time','supplier','puchaser','quantity','delivery_date','goods_name',]
 
 
 class PurchasePendingAdmin(object):

@@ -76,7 +76,7 @@ class OriStockInInfo(BaseModel):
     mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='错误标识')
 
     class Meta:
-        verbose_name = 'wms-s-原始入库单查询'
+        verbose_name = 'wms-原始入库单查询'
         verbose_name_plural = verbose_name
         db_table = 'wms_s_oristockin'
 
@@ -169,7 +169,7 @@ class StockInInfo(BaseModel):
     mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='错误标识')
 
     class Meta:
-        verbose_name = 'wms-s-入库单查询'
+        verbose_name = 'wms-入库单查询'
         verbose_name_plural = verbose_name
         unique_together = ('stockin_order_id', 'goods_id', 'warehouse', 'expiry_date')
         db_table = 'wms_s_stockin'
@@ -181,7 +181,7 @@ class StockInInfo(BaseModel):
 class StockInPending(StockInInfo):
 
     class Meta:
-        verbose_name = 'wms-s-未审核入库单'
+        verbose_name = 'wms-未审核入库单'
         verbose_name_plural = verbose_name
         proxy = True
 

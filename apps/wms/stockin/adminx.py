@@ -21,7 +21,7 @@ from xadmin.views.base import filter_hook
 from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 
-from .models import OriStockInPending, OriStockInInfo, StockInInfo
+from .models import OriStockInPending, OriStockInInfo, StockInInfo, StockInPending
 from apps.base.company.models import ManuInfo
 from apps.base.goods.models import GoodsInfo
 from apps.base.warehouse.models import WarehouseGeneral
@@ -94,6 +94,7 @@ class OriSIAction(BaseActionView):
                         obj.mistake_tag = 3
                         obj.save()
                         continue
+                    # 入库单号，货品，仓库，采购单号和批次一样，就合并入库单，只要这四个有一个不同，则认为是独立的入库单。
                     repeat_queryset = StockInInfo.objects.filter(stockin_order_id=obj.stockin_order_id,
                                                                  goods_name=goods, warehouse=warehouse,
                                                                  purchase_order_id=purchase_order,
@@ -114,7 +115,7 @@ class OriSIAction(BaseActionView):
                             obj.order_status = 2
                             obj.save()
                             continue
-
+                    # 设置入库单的入库数量。
                     _quantity_receivable = OriStockInInfo.objects.filter(stockin_order_id=obj.stockin_order_id, goods_id=obj.goods_id, warehouse=obj.warehouse, expiry_date=obj.expiry_date, order_status__in=[1, 2])
                     _quantity_receivable = _quantity_receivable.aggregate(quantity_receivable=Sum('quantity_received'))
                     quantity_receivable = _quantity_receivable['quantity_receivable']
@@ -507,20 +508,48 @@ class OriStockInPendingAdmin(object):
                 report_dic["false"] += 1
         return report_dic
 
+    def queryset(self):
+        queryset = super(OriStockInPendingAdmin, self).queryset()
+        queryset = queryset.filter(is_delete=0, order_status=1)
+        return queryset
+
 
 class OriStockInInfoAdmin(object):
-    pass
+    list_display = ['stockin_order_id', 'mistake_tag', 'order_status', 'supplier', 'create_date', 'purchaser',
+                    'goods_name', 'goods_size', 'goods_unit', 'quantity_receivable', 'quantity_received',
+                    'warehouse', 'origin_order_id', 'purchase_order_id','goods_id',]
+    list_filter = ['mistake_tag', 'supplier', 'goods_id', 'goods_name', 'warehouse', 'origin_order_id',
+                   'purchase_order_id', 'create_date', 'update_time', 'create_time', 'creator']
+    readonly_fields = ['stockin_order_id', 'mistake_tag', 'order_status', 'supplier', 'create_date', 'purchaser',
+                    'goods_name', 'goods_size', 'goods_unit', 'quantity_receivable', 'quantity_received',
+                    'warehouse', 'origin_order_id', 'purchase_order_id','goods_id',]
+
+
+class StockInPendingAdmin(object):
+    list_display = ['order_category','mistake_tag','order_status', 'supplier', 'create_date', 'stockin_order_id', 'purchaser', 'goods_id',
+                    'goods_name', 'goods_size', 'goods_unit', 'quantity_receivable', 'quantity_received',
+                    'warehouse', 'origin_order_id', 'purchase_order_id', ]
+
+    list_filter = ['mistake_tag', 'supplier', 'goods_id', 'goods_name', 'warehouse', 'origin_order_id', 'purchase_order_id', 'create_date', 'update_time', 'create_time','creator']
+    search_fields = []
+    actions = [SIAction]
+
+    def queryset(self):
+        queryset = super(StockInPendingAdmin, self).queryset()
+        queryset = queryset.filter(is_delete=0, order_status=1)
+        return queryset
 
 
 class StockInInfoAdmin(object):
     list_display = ['order_category', 'supplier', 'create_date', 'stockin_order_id', 'purchaser', 'goods_id',
                     'goods_name', 'goods_size', 'goods_unit', 'quantity_receivable', 'quantity_received',
                     'warehouse', 'origin_order_id', 'purchase_order_id', ]
-
-    actions = [SIAction]
+    list_filter = ['mistake_tag', 'supplier', 'goods_id', 'goods_name', 'warehouse', 'origin_order_id', 'purchase_order_id', 'create_date', 'update_time', 'create_time','creator']
+    search_fields = []
 
 
 xadmin.site.register(OriStockInPending, OriStockInPendingAdmin)
 xadmin.site.register(OriStockInInfo, OriStockInInfoAdmin)
+xadmin.site.register(StockInPending, StockInPendingAdmin)
 xadmin.site.register(StockInInfo, StockInInfoAdmin)
 
