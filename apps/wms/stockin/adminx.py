@@ -101,8 +101,9 @@ class OriSIAction(BaseActionView):
                                                                  expiry_date=obj.expiry_date)
                     if repeat_queryset.exists():
                         repeat_order = repeat_queryset[0]
-                        if repeat_order.quantity_receivable < (obj.quantity_received + repeat_order.quantity_received):
-                            repeat_order.quantity_received = obj.quantity_received + repeat_order.quantity_received
+                        current_quantity = obj.quantity_received + repeat_order.quantity_received
+                        if repeat_order.quantity_receivable >= current_quantity:
+                            repeat_order.quantity_received = current_quantity
                             repeat_order.save()
                             self.message_user("单号%s，合并货品%s" % (obj.stockin_order_id, obj.goods_id), "info")
                             obj.mistake_tag = 1
@@ -110,7 +111,7 @@ class OriSIAction(BaseActionView):
                             obj.save()
                             continue
                         else:
-                            self.message_user("单号%s，重复。货品是%s" % (obj.stockin_order_id, obj.goods_id), "error")
+                            self.message_user("单号%s，重复或者单据被篡改。货品是%s" % (obj.stockin_order_id, obj.goods_id), "error")
                             obj.mistake_tag = 2
                             obj.order_status = 2
                             obj.save()
@@ -123,8 +124,6 @@ class OriSIAction(BaseActionView):
                     stockin_order.quantity_receivable = quantity_receivable
                     fields_list = ['order_category','to_organization','order_creator','supplier_address','create_date','seller','bs_category','stockin_order_id','last_modifier','payee','stockin_time','last_modify_time','consignee','is_cancel','purchaser','status','demander','goods_id','goods_size','goods_unit','quantity_receivable','quantity_received','batch_number','expiry_date','produce_time','memorandum','origin_order_category','origin_order_id','payable_quantity','assist_quantity','multiple','price','storage']
 
-                    purchase_order.complete_quantity += obj.quantity_received
-                    purchase_order.save()
                     for k in fields_list:
                         if hasattr(obj, k):
                             setattr(stockin_order, k, getattr(obj, k))  # 更新对象属性对应键值
@@ -164,18 +163,47 @@ class SIAction(BaseActionView):
                 for obj in queryset:
                     self.log('change', '', obj)
                     if obj.quantity_received == obj.quantity_receivable:
-                        if obj.purchase_order_id.quantity > obj.purchase_order_id.complete_quantity:
-                            obj.purchase_order_id.complete_quantity = obj.purchase_order_id.complete_quantity + obj.quantity_received
-
+                        current_quantity = obj.purchase_order_id.complete_quantity + obj.quantity_received
+                        if obj.purchase_order_id.quantity >= current_quantity:
+                            obj.purchase_order_id.complete_quantity = current_quantity
                             obj.purchase_order_id.save()
+                        else:
+                            obj.mistake_tag =2
+                            n -= 1
+                            obj.save()
+                            continue
+                    else:
+                        obj.mistake_tag = 1
+                        n -= 1
+                        obj.save()
+                        continue
 
+                    is_exists = StockInfo.objects.filter(goods_name=obj.goods_name, warehouse=obj.warehouse)
+                    if is_exists.exists():
+                        stock_exists = is_exists[0]
+                        stock_exists.quantity += obj.quantity_received
+                        stock_exists.undistributed += obj.quantity_received
+                        stock_exists.save()
                         obj.order_status = 2
                         obj.save()
-                        self.message_user("%s 递交完毕" % obj.stockin_order_id, "info")
                     else:
-                        obj.mistake_tag = 2
+                        stock = StockInfo()
+                        attrs = ['goods_name', 'goods_id', 'warehouse']
+                        for att in attrs:
+                            value = getattr(obj, att, None)
+                            setattr(stock, att, value)
+                        stock.undistributed = obj.quantity_received
+                        stock.quantity = obj.quantity_received
+                        stock.creator = self.request.user.username
+                        try:
+                            stock.save()
+                        except Exception as e:
+                            n -= 1
+                            obj.mistake_tag = 3
+                            obj.save()
+                            continue
+                        obj.order_status = 2
                         obj.save()
-                        self.message_user("%s请递交剩余的原始入库单之后再递交" % obj.stockin_order_id, "info")
 
             self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
                               'success')
@@ -474,6 +502,17 @@ class OriStockInPendingAdmin(object):
                 report_dic["repeated"] += 1
                 report_dic["error"].append('%s单据重复导入' % stockin_order_id)
                 continue
+            same_warehouse_order = OriStockInInfo.objects.filter(stockin_order_id=stockin_order_id, goods_id=goods_id,
+                                                                 warehouse=warehouse, price=price,
+                                                                 batch_number=batch_number)
+            if same_warehouse_order.exists():
+                quantity_receivables = same_warehouse_order.aggregate(Sum("quantity_received"))["quantity_received__sum"]
+                row["quantity_receivable"] = quantity_receivables + row["quantity_received"]
+                for sameorder in same_warehouse_order:
+                    sameorder.quantity_receivable = quantity_receivables + row["quantity_received"]
+                    sameorder.save()
+            else:
+                row["quantity_receivable"] = row["quantity_received"]
 
             row['create_date'] = datetime.datetime.strptime(row['create_date'], '%Y/%m/%d')
             row['stockin_time'] = datetime.datetime.strptime(row['stockin_time'], '%Y/%m/%d')
@@ -533,6 +572,14 @@ class StockInPendingAdmin(object):
     list_filter = ['mistake_tag', 'supplier', 'goods_id', 'goods_name', 'warehouse', 'origin_order_id', 'purchase_order_id', 'create_date', 'update_time', 'create_time','creator']
     search_fields = []
     actions = [SIAction]
+    form_layout = [
+        Fieldset('存货信息',
+                 'goods_name', "warehouse", "quantity", 'goods_name', 'quantity'),
+        Fieldset('选填信息',
+                 'memorandum'),
+        Fieldset(None,
+                 'creator', 'order_status', 'is_delete', **{"style": "display:None"}),
+    ]
 
     def queryset(self):
         queryset = super(StockInPendingAdmin, self).queryset()

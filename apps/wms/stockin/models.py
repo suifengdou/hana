@@ -52,7 +52,7 @@ class OriStockInInfo(BaseModel):
     purchaser = models.CharField(max_length=60, verbose_name='采购组织')
     status = models.CharField(max_length=60, verbose_name='单据状态')
     demander = models.CharField(max_length=60, verbose_name='需求组织')
-    goods_id = models.CharField(max_length=60, verbose_name='物料编码')
+    goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     goods_name = models.CharField(max_length=60, verbose_name='物料名称')
     goods_size = models.CharField(max_length=60, verbose_name='规格型号')
     goods_unit = models.CharField(max_length=60, verbose_name='库存单位')
@@ -118,8 +118,8 @@ class StockInInfo(BaseModel):
     MISTAKE_TAG = (
         (0, '正常'),
         (1, '原始单缺漏'),
-        (2, '货主错误'),
-        (3, '仓库错误'),
+        (2, '入库数量大于采购数量'),
+        (3, '保存库存错误'),
         (4, '货品错误'),
         (5, '采购单错误'),
         (5, '采购单数量错误'),
@@ -143,7 +143,7 @@ class StockInInfo(BaseModel):
     purchaser = models.CharField(max_length=60, verbose_name='采购组织')
     status = models.CharField(max_length=60, verbose_name='单据状态')
     demander = models.CharField(max_length=60, verbose_name='需求组织')
-    goods_id = models.CharField(max_length=60, verbose_name='物料编码')
+    goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     goods_name = models.ForeignKey(GoodsInfo, on_delete=models.CASCADE, verbose_name='物料名称')
     goods_size = models.CharField(max_length=60, verbose_name='规格型号')
     goods_unit = models.CharField(max_length=60, verbose_name='库存单位')

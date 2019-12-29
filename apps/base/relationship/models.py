@@ -11,7 +11,7 @@ from django.db import models
 from apps.base.goods.models import BarCodeInfo, GoodsInfo, SeriesInfo
 from apps.base.company.models import ManuInfo
 from apps.base.department.models import DepartmentInfo
-from apps.base.warehouse.models import WarehouseManu, WarehouseGeneral
+from apps.base.warehouse.models import WarehouseManu, WarehouseGeneral, WarehouseVirtual
 
 
 class BarCodeToGoods(BaseModel):
@@ -39,7 +39,7 @@ class DepartmentToWarehouse(BaseModel):
         (1, '正常'),
     )
     department = models.ForeignKey(DepartmentInfo, models.CASCADE, verbose_name='部门')
-    warehouse = models.ForeignKey(WarehouseGeneral, models.CASCADE, verbose_name='仓库')
+    warehouse = models.ForeignKey(WarehouseVirtual, models.CASCADE, verbose_name='仓库')
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='单据状态')
 
     class Meta:

@@ -17,7 +17,7 @@ class ChangeLogInfo(BaseModel):
     class Meta:
         verbose_name = '版本说明'
         verbose_name_plural = verbose_name
-        db_table = 'base_zoneu'
+        db_table = 'base_changelog'
 
     def __str__(self):
         return self.version_number

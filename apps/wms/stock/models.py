@@ -22,7 +22,7 @@ class StockInfo(BaseModel):
     )
 
     goods_name = models.ForeignKey(GoodsInfo, on_delete=models.CASCADE, verbose_name='货品名称')
-    goods_id = models.CharField(max_length=60, verbose_name='物料编码')
+    goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     warehouse = models.ForeignKey(WarehouseGeneral, on_delete=models.CASCADE, verbose_name='仓库')
     quantity = models.IntegerField(verbose_name='库存')
     undistributed = models.IntegerField(verbose_name='未分配库存')
@@ -33,6 +33,7 @@ class StockInfo(BaseModel):
     class Meta:
         verbose_name = 'WMS-库存-实仓'
         verbose_name_plural = verbose_name
+        index_together = ['goods_name', 'warehouse']
         db_table = 'wms_stock_stock'
 
     def __str__(self):
@@ -45,7 +46,7 @@ class DeptStockInfo(BaseModel):
         (1, '正常销售'),
     )
     goods_name = models.ForeignKey(GoodsInfo, on_delete=models.CASCADE, verbose_name='货品名称')
-    goods_id = models.CharField(max_length=60, verbose_name='物料编码')
+    goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     warehouse = models.ForeignKey(WarehouseGeneral, on_delete=models.CASCADE, verbose_name='仓库')
     vwarehouse = models.ForeignKey(WarehouseVirtual, related_name='vware', on_delete=models.CASCADE, verbose_name='虚拟仓')
     quantity = models.IntegerField(verbose_name='库存')
@@ -56,6 +57,7 @@ class DeptStockInfo(BaseModel):
     class Meta:
         verbose_name = 'WMS-库存-部门仓'
         verbose_name_plural = verbose_name
+        index_together = ['goods_name', 'warehouse', 'vwarehouse']
         db_table = 'wms_stock_deptstock'
 
     def __str__(self):

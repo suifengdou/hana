@@ -122,7 +122,7 @@ class GoodsInfo(BaseModel):
         (5, '粉'),
     )
     goods_name = models.CharField(max_length=150, verbose_name='货品名称')
-    goods_id = models.CharField(unique=True, max_length=150, verbose_name='货品代码')
+    goods_id = models.CharField(unique=True, max_length=150, verbose_name='货品代码', db_index=True)
     size = models.ForeignKey(SizeInfo, on_delete=models.CASCADE, verbose_name='规格')
     manufactory = models.ForeignKey(ManuInfo, on_delete=models.CASCADE, verbose_name='工厂')
     series = models.ForeignKey(SeriesInfo, null=True, blank=True, on_delete=models.CASCADE, verbose_name='系列')

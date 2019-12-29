@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'apps.base.changelog.apps.ChangelogConfig',
     'apps.oms.purchase.apps.PurchaseConfig',
     'apps.oms.predistribution.apps.PredistributionConfig',
+    'apps.oms.allot.apps.AllotConfig',
     'apps.wms.stockin.apps.StockinConfig',
     'apps.wms.stock.apps.StockConfig',
 ]
