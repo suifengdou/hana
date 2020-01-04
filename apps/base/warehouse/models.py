@@ -20,6 +20,8 @@ class WarehouseInfo(BaseModel):
         (0, '普通仓库'),
         (1, '工厂仓库'),
         (2, '虚拟仓库'),
+        (3, '残品仓库'),
+        (4, '退货仓库'),
     )
     warehouse_name = models.CharField(unique=True, max_length=60, verbose_name='仓库名称')
     warehouse_id = models.CharField(unique=True, max_length=20, verbose_name='仓库ID')

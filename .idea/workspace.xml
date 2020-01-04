@@ -2,44 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="cbad5512-01a2-4ef1-aefd-c5907faeb705" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/base/goods/migrations/0002_auto_20191229_1658.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/base/relationship/migrations/0002_auto_20191229_0954.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/oms/allot/migrations/0001_initial.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/oms/allot/migrations/0002_virtualallot_checker.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/oms/purchase/migrations/0002_auto_20191229_1658.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/wms/stock/migrations/0002_auto_20191228_2052.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/wms/stock/migrations/0003_auto_20191228_2053.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/wms/stock/migrations/0004_auto_20191229_1658.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/wms/stockin/migrations/0002_auto_20191228_2052.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/apps/wms/stockin/migrations/0003_auto_20191229_1658.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/hana.iml" afterPath="$PROJECT_DIR$/.idea/hana.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/changelog/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/base/changelog/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/changelog/models.py" afterPath="$PROJECT_DIR$/apps/base/changelog/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/company/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/base/company/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/department/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/base/department/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/goods/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/base/goods/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/goods/models.py" afterPath="$PROJECT_DIR$/apps/base/goods/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/ragulation/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/base/ragulation/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/relationship/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/base/relationship/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/relationship/models.py" afterPath="$PROJECT_DIR$/apps/base/relationship/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/shop/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/base/shop/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/warehouse/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/base/warehouse/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/oms/allot/models.py" afterPath="$PROJECT_DIR$/apps/oms/allot/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/oms/predistribution/adminx.py" afterPath="$PROJECT_DIR$/apps/oms/predistribution/adminx.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/oms/predistribution/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/oms/predistribution/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/oms/predistribution/models.py" afterPath="$PROJECT_DIR$/apps/oms/predistribution/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/oms/purchase/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/oms/purchase/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/oms/purchase/models.py" afterPath="$PROJECT_DIR$/apps/oms/purchase/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/users/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/users/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/wms/stock/adminx.py" afterPath="$PROJECT_DIR$/apps/wms/stock/adminx.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/wms/stock/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/wms/stock/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/wms/stock/models.py" afterPath="$PROJECT_DIR$/apps/wms/stock/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/wms/stockin/adminx.py" afterPath="$PROJECT_DIR$/apps/wms/stockin/adminx.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/wms/stockin/migrations/0001_initial.py" afterPath="$PROJECT_DIR$/apps/wms/stockin/migrations/0001_initial.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/wms/stockin/models.py" afterPath="$PROJECT_DIR$/apps/wms/stockin/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/hana/settings.py" afterPath="$PROJECT_DIR$/hana/settings.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/base/warehouse/models.py" afterPath="$PROJECT_DIR$/apps/base/warehouse/models.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/apps/users/adminx.py" afterPath="$PROJECT_DIR$/apps/users/adminx.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -62,189 +27,16 @@
   <component name="DjangoConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)">
     <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" />
   </component>
-  <component name="DockManager">
-    <window id="1">
-      <content type="file-editors">
-        <state>
-          <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-            <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
-              <entry file="file://$PROJECT_DIR$/apps/wms/stockin/models.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="420">
-                    <caret line="145" column="81" lean-forward="false" selection-start-line="145" selection-start-column="81" selection-end-line="145" selection-end-column="81" />
-                    <folding />
-                  </state>
-                </provider>
-              </entry>
-            </file>
-            <file leaf-file-name="models.py" pinned="false" current-in-tab="true">
-              <entry file="file://$PROJECT_DIR$/apps/wms/stock/models.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="921">
-                    <caret line="63" column="35" lean-forward="true" selection-start-line="63" selection-start-column="35" selection-end-line="63" selection-end-column="35" />
-                    <folding>
-                      <element signature="e#130#158#0" expanded="true" />
-                    </folding>
-                  </state>
-                </provider>
-              </entry>
-            </file>
-            <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
-              <entry file="file://$PROJECT_DIR$/apps/base/warehouse/models.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="220">
-                    <caret line="14" column="14" lean-forward="true" selection-start-line="14" selection-start-column="14" selection-end-line="14" selection-end-column="14" />
-                    <folding />
-                  </state>
-                </provider>
-              </entry>
-            </file>
-            <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
-              <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/models.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="860">
-                    <caret line="73" column="57" lean-forward="false" selection-start-line="73" selection-start-column="44" selection-end-line="73" selection-end-column="57" />
-                    <folding>
-                      <element signature="e#129#157#0" expanded="true" />
-                    </folding>
-                  </state>
-                </provider>
-              </entry>
-            </file>
-            <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
-              <entry file="file://$PROJECT_DIR$/apps/oms/allot/models.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="387">
-                    <caret line="43" column="31" lean-forward="false" selection-start-line="43" selection-start-column="31" selection-end-line="43" selection-end-column="31" />
-                    <folding>
-                      <element signature="e#128#156#0" expanded="true" />
-                    </folding>
-                  </state>
-                </provider>
-              </entry>
-            </file>
-          </leaf>
-        </state>
-      </content>
-    </window>
-  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="adminx.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/apps/wms/stockin/adminx.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="547">
-              <caret line="581" column="5" lean-forward="true" selection-start-line="574" selection-start-column="3" selection-end-line="581" selection-end-column="5" />
-              <folding>
-                <element signature="e#1074#7017#0" expanded="false" />
-                <element signature="e#7273#9982#0" expanded="false" />
-                <element signature="e#10027#24145#0" expanded="false" />
-                <element signature="e#10637#11292#0" expanded="false" />
-                <element signature="e#11361#16312#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="adminx.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/apps/oms/purchase/adminx.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="547">
-              <caret line="295" column="8" lean-forward="true" selection-start-line="295" selection-start-column="8" selection-end-line="295" selection-end-column="8" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="adminx.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/adminx.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="380">
-              <caret line="68" column="0" lean-forward="false" selection-start-line="68" selection-start-column="0" selection-end-line="70" selection-end-column="42" />
-              <folding>
-                <element signature="e#129#148#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="adminx.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/apps/wms/stock/adminx.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="920">
-              <caret line="94" column="71" lean-forward="false" selection-start-line="94" selection-start-column="61" selection-end-line="94" selection-end-column="71" />
-              <folding>
-                <element signature="e#130#149#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="adminx.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/apps/base/goods/adminx.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="378">
-              <caret line="113" column="4" lean-forward="false" selection-start-line="113" selection-start-column="4" selection-end-line="113" selection-end-column="30" />
-              <folding>
-                <element signature="e#775#3773#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="edit.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ext_apps/xadmin/views/edit.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="315">
-              <caret line="296" column="53" lean-forward="true" selection-start-line="296" selection-start-column="53" selection-end-line="296" selection-end-column="53" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="base.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ext_apps/xadmin/views/base.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="227">
-              <caret line="46" column="0" lean-forward="false" selection-start-line="46" selection-start-column="0" selection-end-line="46" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="adminx.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/apps/oms/allot/adminx.py">
+        <entry file="file://$PROJECT_DIR$/apps/users/adminx.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2319">
-              <caret line="123" column="36" lean-forward="true" selection-start-line="123" selection-start-column="36" selection-end-line="123" selection-end-column="36" />
+            <state relative-caret-position="260">
+              <caret line="13" column="28" lean-forward="true" selection-start-line="13" selection-start-column="28" selection-end-line="13" selection-end-column="28" />
               <folding>
-                <element signature="e#132#151#0" expanded="true" />
-                <element signature="e#851#2102#0" expanded="false" />
-                <element signature="e#1060#2099#0" expanded="false" />
-                <element signature="e#2153#3401#0" expanded="false" />
+                <element signature="e#82#95#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/apps/base/relationship/models.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="373">
-              <caret line="43" column="0" lean-forward="true" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
-              <folding>
-                <element signature="e#130#165#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="apps.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/apps/oms/allot/apps.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -295,7 +87,6 @@
         <option value="$PROJECT_DIR$/apps/base/warehouse/migrations/0001_initial.py" />
         <option value="$PROJECT_DIR$/apps/base/shop/models.py" />
         <option value="$PROJECT_DIR$/apps/base/relationship/migrations/__init__.py" />
-        <option value="$PROJECT_DIR$/apps/base/warehouse/models.py" />
         <option value="$PROJECT_DIR$/apps/base/shop/adminx.py" />
         <option value="$PROJECT_DIR$/apps/base/ragulation/adminx.py" />
         <option value="$PROJECT_DIR$/apps/base/changelog/adminx.py" />
@@ -306,7 +97,6 @@
         <option value="$PROJECT_DIR$/apps/base/department/adminx.py" />
         <option value="$PROJECT_DIR$/apps/base/goods/adminx.py" />
         <option value="$PROJECT_DIR$/apps/base/relationship/adminx.py" />
-        <option value="$PROJECT_DIR$/apps/users/adminx.py" />
         <option value="$PROJECT_DIR$/apps/oms/purchase/adminx.py" />
         <option value="$PROJECT_DIR$/apps/base/company/apps.py" />
         <option value="$PROJECT_DIR$/apps/base/goods/apps.py" />
@@ -334,6 +124,8 @@
         <option value="$PROJECT_DIR$/apps/wms/stock/adminx.py" />
         <option value="$PROJECT_DIR$/apps/oms/predistribution/adminx.py" />
         <option value="$PROJECT_DIR$/apps/oms/allot/adminx.py" />
+        <option value="$PROJECT_DIR$/apps/base/warehouse/models.py" />
+        <option value="$PROJECT_DIR$/apps/users/adminx.py" />
       </list>
     </option>
   </component>
@@ -344,10 +136,10 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="610" />
-    <option name="y" value="160" />
+    <option name="x" value="351" />
+    <option name="y" value="80" />
     <option name="width" value="1921" />
-    <option name="height" value="1219" />
+    <option name="height" value="1447" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -364,7 +156,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -381,19 +173,6 @@
               <item name="hana" type="b2602c69:ProjectViewProjectNode" />
               <item name="hana" type="462c0819:PsiDirectoryNode" />
               <item name="apps" type="462c0819:PsiDirectoryNode" />
-              <item name="base" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hana" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hana" type="462c0819:PsiDirectoryNode" />
-              <item name="apps" type="462c0819:PsiDirectoryNode" />
-              <item name="base" type="462c0819:PsiDirectoryNode" />
-              <item name="goods" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hana" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hana" type="462c0819:PsiDirectoryNode" />
-              <item name="apps" type="462c0819:PsiDirectoryNode" />
               <item name="oms" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -402,36 +181,6 @@
               <item name="apps" type="462c0819:PsiDirectoryNode" />
               <item name="oms" type="462c0819:PsiDirectoryNode" />
               <item name="allot" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hana" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hana" type="462c0819:PsiDirectoryNode" />
-              <item name="apps" type="462c0819:PsiDirectoryNode" />
-              <item name="oms" type="462c0819:PsiDirectoryNode" />
-              <item name="allot" type="462c0819:PsiDirectoryNode" />
-              <item name="migrations" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hana" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hana" type="462c0819:PsiDirectoryNode" />
-              <item name="apps" type="462c0819:PsiDirectoryNode" />
-              <item name="oms" type="462c0819:PsiDirectoryNode" />
-              <item name="predistribution" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hana" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hana" type="462c0819:PsiDirectoryNode" />
-              <item name="apps" type="462c0819:PsiDirectoryNode" />
-              <item name="oms" type="462c0819:PsiDirectoryNode" />
-              <item name="predistribution" type="462c0819:PsiDirectoryNode" />
-              <item name="migrations" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hana" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hana" type="462c0819:PsiDirectoryNode" />
-              <item name="apps" type="462c0819:PsiDirectoryNode" />
-              <item name="oms" type="462c0819:PsiDirectoryNode" />
-              <item name="purchase" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="hana" type="b2602c69:ProjectViewProjectNode" />
@@ -457,7 +206,7 @@
               <item name="hana" type="462c0819:PsiDirectoryNode" />
               <item name="apps" type="462c0819:PsiDirectoryNode" />
               <item name="wms" type="462c0819:PsiDirectoryNode" />
-              <item name="stockin" type="462c0819:PsiDirectoryNode" />
+              <item name="stockout" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="hana" type="b2602c69:ProjectViewProjectNode" />
@@ -468,7 +217,7 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -565,23 +314,24 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="610" y="160" width="1921" height="1219" extended-state="0" />
+    <frame x="351" y="80" width="1921" height="1447" extended-state="0" />
+    <editor active="true" />
     <layout>
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.18108544" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32910156" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
-      <window_info id="manage.py@hana" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.23740458" sideWeight="0.67582417" order="13" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.23765786" sideWeight="0.32417583" order="14" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32910156" sideWeight="0.5" order="15" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="16" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="17" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17141321" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.53561515" sideWeight="0.77472526" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="17" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.44198474" sideWeight="0.77472526" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.07092961" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="manage.py@hana" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.23740458" sideWeight="0.67582417" order="13" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="manage.py@tbd2" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.28211382" sideWeight="0.7307195" order="19" side_tool="false" content_ui="tabs" />
@@ -721,7 +471,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -740,13 +489,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/apps/users/adminx.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="80">
-          <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/apps.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="100">
@@ -759,7 +501,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="541">
           <caret line="111" column="43" lean-forward="false" selection-start-line="111" selection-start-column="35" selection-end-line="111" selection-end-column="43" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -775,7 +516,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="235">
           <caret line="118" column="0" lean-forward="false" selection-start-line="118" selection-start-column="0" selection-end-line="118" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -791,9 +531,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="200">
           <caret line="253" column="16" lean-forward="false" selection-start-line="253" selection-start-column="8" selection-end-line="253" selection-end-column="16" />
-          <folding>
-            <element signature="e#0#11#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -801,7 +538,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="565">
           <caret line="363" column="0" lean-forward="false" selection-start-line="363" selection-start-column="0" selection-end-line="363" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -809,7 +545,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="400">
           <caret line="21" column="0" lean-forward="false" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -817,7 +552,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -825,7 +559,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -833,7 +566,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="280">
           <caret line="16" column="37" lean-forward="false" selection-start-line="16" selection-start-column="19" selection-end-line="16" selection-end-column="37" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -841,7 +573,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -861,35 +592,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/apps/oms/allot/apps.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/base/warehouse/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="220">
-          <caret line="14" column="14" lean-forward="true" selection-start-line="14" selection-start-column="14" selection-end-line="14" selection-end-column="14" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/wms/stockin/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="420">
-          <caret line="145" column="81" lean-forward="false" selection-start-line="145" selection-start-column="81" selection-end-line="145" selection-end-column="81" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/apps/base/standard/models.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -909,45 +615,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ext_apps/xadmin/views/base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="227">
-          <caret line="46" column="0" lean-forward="false" selection-start-line="46" selection-start-column="0" selection-end-line="46" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ext_apps/xadmin/views/list.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="235">
           <caret line="171" column="0" lean-forward="false" selection-start-line="171" selection-start-column="0" selection-end-line="171" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/migrations/0002_auto_20191229_1658.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="260">
-          <caret line="15" column="40" lean-forward="false" selection-start-line="15" selection-start-column="24" selection-end-line="15" selection-end-column="40" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/migrations/0002_auto_20191229_1658.py" />
     <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/migrations/0001_initial.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="75">
           <caret line="18" column="0" lean-forward="true" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="860">
-          <caret line="73" column="57" lean-forward="false" selection-start-line="73" selection-start-column="44" selection-end-line="73" selection-end-column="57" />
-          <folding>
-            <element signature="e#129#157#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -955,22 +634,124 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="295">
           <caret line="239" column="16" lean-forward="true" selection-start-line="239" selection-start-column="16" selection-end-line="239" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/base/relationship/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="740">
+          <caret line="43" column="0" lean-forward="false" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/wms/stock/adminx.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1440">
+          <caret line="94" column="71" lean-forward="false" selection-start-line="94" selection-start-column="61" selection-end-line="94" selection-end-column="71" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/oms/allot/adminx.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="131" column="29" lean-forward="false" selection-start-line="131" selection-start-column="29" selection-end-line="131" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ext_apps/xadmin/views/base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="280">
+          <caret line="46" column="0" lean-forward="false" selection-start-line="46" selection-start-column="0" selection-end-line="46" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ext_apps/xadmin/views/edit.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="296" column="53" lean-forward="true" selection-start-line="296" selection-start-column="53" selection-end-line="296" selection-end-column="53" />
+        <state relative-caret-position="992">
+          <caret line="296" column="53" lean-forward="false" selection-start-line="296" selection-start-column="53" selection-end-line="296" selection-end-column="53" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/base/goods/adminx.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="380">
+          <caret line="113" column="4" lean-forward="false" selection-start-line="113" selection-start-column="4" selection-end-line="113" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/oms/allot/apps.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/oms/purchase/adminx.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5500">
+          <caret line="295" column="8" lean-forward="false" selection-start-line="295" selection-start-column="8" selection-end-line="295" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/base/warehouse/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="21" column="20" lean-forward="true" selection-start-line="21" selection-start-column="20" selection-end-line="21" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/oms/allot/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="420">
+          <caret line="29" column="19" lean-forward="false" selection-start-line="29" selection-start-column="19" selection-end-line="29" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="740">
+          <caret line="45" column="84" lean-forward="false" selection-start-line="45" selection-start-column="72" selection-end-line="45" selection-end-column="84" />
+          <folding>
+            <element signature="e#129#157#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/wms/stockin/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2740">
+          <caret line="145" column="81" lean-forward="false" selection-start-line="145" selection-start-column="81" selection-end-line="145" selection-end-column="81" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/adminx.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="580">
+          <caret line="109" column="31" lean-forward="true" selection-start-line="109" selection-start-column="31" selection-end-line="109" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/apps/wms/stock/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="641">
+          <caret line="65" column="0" lean-forward="false" selection-start-line="65" selection-start-column="0" selection-end-line="65" selection-end-column="0" />
+          <folding>
+            <element signature="e#130#158#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/apps/wms/stockin/adminx.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="547">
-          <caret line="581" column="5" lean-forward="true" selection-start-line="574" selection-start-column="3" selection-end-line="581" selection-end-column="5" />
+        <state relative-caret-position="20">
+          <caret line="147" column="33" lean-forward="false" selection-start-line="147" selection-start-column="33" selection-end-line="147" selection-end-column="33" />
           <folding>
             <element signature="e#1074#7017#0" expanded="false" />
             <element signature="e#7273#9982#0" expanded="false" />
@@ -981,83 +762,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/apps/oms/purchase/adminx.py">
+    <entry file="file://$PROJECT_DIR$/apps/users/adminx.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="547">
-          <caret line="295" column="8" lean-forward="true" selection-start-line="295" selection-start-column="8" selection-end-line="295" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/base/relationship/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="373">
-          <caret line="43" column="0" lean-forward="true" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+        <state relative-caret-position="260">
+          <caret line="13" column="28" lean-forward="true" selection-start-line="13" selection-start-column="28" selection-end-line="13" selection-end-column="28" />
           <folding>
-            <element signature="e#130#165#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/base/goods/adminx.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="113" column="4" lean-forward="false" selection-start-line="113" selection-start-column="4" selection-end-line="113" selection-end-column="30" />
-          <folding>
-            <element signature="e#775#3773#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/wms/stock/adminx.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="920">
-          <caret line="94" column="71" lean-forward="false" selection-start-line="94" selection-start-column="61" selection-end-line="94" selection-end-column="71" />
-          <folding>
-            <element signature="e#130#149#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/oms/allot/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="387">
-          <caret line="43" column="31" lean-forward="false" selection-start-line="43" selection-start-column="31" selection-end-line="43" selection-end-column="31" />
-          <folding>
-            <element signature="e#128#156#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/oms/predistribution/adminx.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="380">
-          <caret line="68" column="0" lean-forward="false" selection-start-line="68" selection-start-column="0" selection-end-line="70" selection-end-column="42" />
-          <folding>
-            <element signature="e#129#148#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/wms/stock/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="921">
-          <caret line="63" column="35" lean-forward="true" selection-start-line="63" selection-start-column="35" selection-end-line="63" selection-end-column="35" />
-          <folding>
-            <element signature="e#130#158#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/apps/oms/allot/adminx.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2319">
-          <caret line="123" column="36" lean-forward="true" selection-start-line="123" selection-start-column="36" selection-end-line="123" selection-end-column="36" />
-          <folding>
-            <element signature="e#132#151#0" expanded="true" />
-            <element signature="e#851#2102#0" expanded="false" />
-            <element signature="e#1060#2099#0" expanded="false" />
-            <element signature="e#2153#3401#0" expanded="false" />
+            <element signature="e#82#95#0" expanded="true" />
           </folding>
         </state>
       </provider>
