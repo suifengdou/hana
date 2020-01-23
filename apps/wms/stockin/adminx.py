@@ -237,8 +237,9 @@ class OriStockInPendingAdmin(object):
 
     def handle_upload_file(self, _file):
         INIT_FIELDS_DIC = {
+            '明细信息行号': 'row_number',
             '单据类型': 'order_category',
-            '对应组织': 'to_organization',
+            '对应组织': 'null03',
             '创建人': 'order_creator',
             '供货方': 'supplier',
             '供货方地址': 'supplier_address',
@@ -253,7 +254,7 @@ class OriStockInPendingAdmin(object):
             '供应商': 'null01',
             '审核人': 'null02',
             '收料组织': 'consignee',
-            '货主': 'null03',
+            '货主': 'to_organization',
             '审核日期': 'null04',
             '收料部门': 'null05',
             '作废人': 'null06',
@@ -393,21 +394,16 @@ class OriStockInPendingAdmin(object):
         if '.' in _file.name and _file.name.rsplit('.')[-1] in ALLOWED_EXTENSIONS:
             with pd.ExcelFile(_file) as xls:
                 df = pd.read_excel(xls, sheet_name=0)
-                VERIFY_FIELD = ['单据类型', '对应组织', '创建人', '供货方', '供货方地址', '创建日期', '结算方', '业务类型', '单据编号', '最后修改人', '收款方',
-                                '入库日期', '最后修改日期', '收料组织', '作废状态', '采购组织', '单据状态', '需求组织', '仓位']
-                for i in VERIFY_FIELD:
-                    if i == '仓位':
-                        keyword = "100000"
-                        for j in range(len(df.loc[:, [i]])):
-                            if str(df.at[j, i]) in ['nan', 'NaN']:
-                                df.at[j, i] = keyword
-                    else:
-                        keyword = None
-                        for j in range(len(df.loc[:, [i]])):
-                            if str(df.at[j, i]) not in ['nan', 'NaN']:
-                                keyword = df.at[j, i]
-                            else:
-                                df.at[j, i] = keyword
+                FILTER_FIELDS = ['明细信息行号', '单据编号', '单据类型', '创建人', '供货方', '创建日期', '结算方', '业务类型',
+                                 '最后修改人', '收款方', '入库日期', '最后修改日期', '采购组织', '需求组织', '物料编码',
+                                 '物料名称', '规格型号', '库存单位', '应收数量', '实收数量', '成本价', '批号', '仓库', '仓位', '有效期至', '生产日期',
+                                 '源单类型', '源单编号', '关联应付数量（计价基本）', '订单单号', '实收数量(辅单位)', '主/辅换算率']
+                try:
+                    df = df[FILTER_FIELDS]
+                except Exception as e:
+                    report_dic["error"].append(e)
+                    return report_dic
+
                 # 获取表头，对表头进行转换成数据库字段名
                 columns_key = df.columns.values.tolist()
                 for i in range(len(columns_key)):
@@ -480,7 +476,7 @@ class OriStockInPendingAdmin(object):
         # 开始导入数据
         for row in resource:
             # 判断表格尾部
-            order_category = row["order_category"]
+            order_category = row["row_number"]
             if order_category == '合计':
                 break
             # ERP导出文档添加了等于号，毙掉等于号。
@@ -489,20 +485,19 @@ class OriStockInPendingAdmin(object):
                 if re.match(r'^=', str(v)):
                     row[k] = v.replace('=', '').replace('"', '')
 
-            stockin_order_id = str(row["stockin_order_id"])
-            status = str(row["status"])
+            stockin_order_id = "%s-%s" % (str(row["stockin_order_id"]), str(row["row_number"]))
+            row['stockin_order_id'] = stockin_order_id
             goods_id = str(row["goods_id"])
             warehouse = str(row['warehouse'])
             price = row['price']
-            storage = row['storage']
             batch_number = row['batch_number']
 
             # 如果订单号查询，已经存在，丢弃订单，计数为重复订单
-            if OriStockInInfo.objects.filter(stockin_order_id=stockin_order_id, goods_id=goods_id, warehouse=warehouse, price=price, storage=storage, batch_number=batch_number).exists():
+            if OriStockInInfo.objects.filter(stockin_order_id=stockin_order_id).exists():
                 report_dic["repeated"] += 1
                 report_dic["error"].append('%s单据重复导入' % stockin_order_id)
                 continue
-            same_warehouse_order = OriStockInInfo.objects.filter(stockin_order_id=stockin_order_id, goods_id=goods_id,
+            same_warehouse_order = OriStockInInfo.objects.filter(goods_id=goods_id, order_status=1,
                                                                  warehouse=warehouse, price=price,
                                                                  batch_number=batch_number)
             if same_warehouse_order.exists():
@@ -519,15 +514,6 @@ class OriStockInPendingAdmin(object):
             row['last_modify_time'] = datetime.datetime.strptime(row['last_modify_time'], '%Y/%m/%d')
             row['produce_time'] = datetime.datetime.strptime(row['produce_time'], '%Y/%m/%d')
             row['expiry_date'] = datetime.datetime.strptime(row['expiry_date'], '%Y/%m/%d')
-
-
-            # 状态不是'已完成', '待打印', '已打印'，就丢弃这个订单，计数为丢弃订单
-            if status not in ['已审核']:
-                report_dic["discard"] += 1
-                report_dic["error"].append('%s单据状态错误' % stockin_order_id)
-                continue
-
-
 
             for k, v in row.items():
 
