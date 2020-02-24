@@ -22,7 +22,7 @@ from xadmin.views.base import filter_hook
 from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 
-from .models import PurchaseInfo, PurchasePending
+from .models import PurchaseInfo, PurchaseTrack
 from apps.base.goods.models import GoodsInfo
 from apps.base.company.models import ManuInfo
 
@@ -31,15 +31,19 @@ ACTION_CHECKBOX_NAME = '_selected_action'
 
 
 class PurchaseInfoAdmin(object):
-    list_display = ['purchase_order_id','purchase_time','status','goods_name','goods_id','goods_unit','quantity','complete_quantity','price','delivery_date','supplier']
-    list_filter = ['purchase_time','supplier','puchaser','quantity','delivery_date','goods_name',]
+    list_display = ['purchase_order_id', 'order_id', 'purchase_time', 'order_status', 'goods_name', 'goods_id', 'quantity',
+                    'complete_quantity', 'price', 'delivery_date', 'supplier']
+
+    list_filter = ['purchase_time',]
 
 
-class PurchasePendingAdmin(object):
-    pass
+class PurchaseTrackAdmin(object):
+    list_display = ['purchase_order_id', 'order_id', 'purchase_time', 'order_status', 'goods_name', 'goods_id', 'quantity',
+                    'complete_quantity', 'price', 'delivery_date', 'supplier']
+    list_filter = ['mistake_tag', 'purchase_time',]
 
 
+xadmin.site.register(PurchaseTrack, PurchaseTrackAdmin)
 xadmin.site.register(PurchaseInfo, PurchaseInfoAdmin)
-xadmin.site.register(PurchasePending, PurchasePendingAdmin)
 
 

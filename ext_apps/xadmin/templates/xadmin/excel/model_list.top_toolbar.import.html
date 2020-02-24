@@ -1,5 +1,6 @@
 {% load i18n %}
 <div class="btn-group export">
+
   <a class="dropdown-toggle btn btn-default btn-sm" data-toggle="dropdown" href="#">
     <i class="icon-share"></i> 导入 <span class="caret"></span>
   </a>
@@ -41,13 +42,20 @@
         <div class="modal-content">
           <form method="post" action="" enctype="multipart/form-data">
               {% csrf_token %}
+
           <div class="modal-header">
+
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
             <h4 class="modal-title">导入 表格文件</h4>
           </div>
-          <div class="modal-body">
-               <input type="file" onchange="fileChange(this)" name="file" id="submit_upload">
 
+          <div class="modal-body">
+              <p>
+              <h4>特别注意：</h4>
+              <span>点击下面按钮，选择好导入的表格，点击导入请耐心等待，不要重复点击导入。数据量特别大的情况，请联系管理员。或者拆分成多个表导入。导入结束后，会自动跳出导入结果。</span>
+              </p>
+
+               <input type="file" onchange="fileChange(this)" name="file" id="submit_upload">
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>

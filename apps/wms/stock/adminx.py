@@ -26,7 +26,7 @@ from xadmin.layout import Fieldset
 
 from .models import StockInfo, DeptStockInfo
 from apps.oms.predistribution.models import Undistribution
-from apps.base.relationship.models import DepartmentToWarehouse
+from apps.base.relationship.models import DeptToW
 from apps.oms.allot.models import VAPending
 
 
@@ -87,7 +87,7 @@ class StockInfoAdmin(object):
             self.formsets[0].forms[i].instance.goods_name = self.org_obj.goods_name
             self.formsets[0].forms[i].instance.goods_id = self.org_obj.goods_id
             department = self.formsets[0].forms[i].instance.department
-            vwarehouse = DepartmentToWarehouse.objects.filter(department=department)
+            vwarehouse = DeptToW.objects.filter(department=department)
             if vwarehouse.exists():
                 self.formsets[0].forms[i].instance.vwarehouse = vwarehouse[0].warehouse
 
@@ -127,7 +127,7 @@ class DeptStockInfoAdmin(object):
                 allot_order_id = prefix + str(serial_number) + "A"
                 self.formsets[0].forms[i].instance.allot_order_id = allot_order_id
                 vwarehouse = self.formsets[0].forms[i].instance.vwarehouse_ori
-                department = DepartmentToWarehouse.objects.filter(warehouse=vwarehouse.vwarehouse)
+                department = DeptToW.objects.filter(warehouse=vwarehouse.vwarehouse)
                 if department:
                     self.formsets[0].forms[i].instance.department = department[0].department
 

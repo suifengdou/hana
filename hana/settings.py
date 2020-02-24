@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'apps.oms.predistribution.apps.PredistributionConfig',
     'apps.oms.allot.apps.AllotConfig',
     'apps.oms.import_console.apps.ImportConsoleConfig',
+    'apps.oms.convert_console.apps.ConvertConsoleConfig',
     'apps.wms.stockin.apps.StockinConfig',
     'apps.wms.stock.apps.StockConfig',
 ]

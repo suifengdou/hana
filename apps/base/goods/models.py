@@ -121,26 +121,35 @@ class GoodsInfo(BaseModel):
         (4, '膏'),
         (5, '粉'),
     )
-    goods_name = models.CharField(max_length=150, verbose_name='货品名称')
-    goods_id = models.CharField(unique=True, max_length=150, verbose_name='货品代码', db_index=True)
-    size = models.ForeignKey(SizeInfo, on_delete=models.CASCADE, verbose_name='规格')
-    manufactory = models.ForeignKey(ManuInfo, on_delete=models.CASCADE, verbose_name='工厂')
+    goods_name = models.CharField(max_length=150, verbose_name='物料名称')
+    goods_id = models.CharField(unique=True, max_length=150, verbose_name='物料编码', db_index=True)
+    size = models.ForeignKey(SizeInfo, on_delete=models.CASCADE, null=True, blank=True, verbose_name='规格')
+    manufactory = models.ForeignKey(ManuInfo, on_delete=models.CASCADE, verbose_name='供应商')
     series = models.ForeignKey(SeriesInfo, null=True, blank=True, on_delete=models.CASCADE, verbose_name='系列')
     category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='类型')
-    e_name = models.CharField(max_length=200, verbose_name='英文名')
-    p_name = models.CharField(max_length=200, verbose_name='产地名')
-    price = models.IntegerField(verbose_name='单价')
-    logistics_time = models.IntegerField(verbose_name='物流周期（天）')
-    order_time = models.IntegerField(verbose_name='订货周期（天）')
+    e_name = models.CharField(max_length=200, null=True, blank=True, verbose_name='英文名')
+    p_name = models.CharField(max_length=200, null=True, blank=True, verbose_name='产地名')
+    price = models.IntegerField(verbose_name='含税单价')
+    logistics_time = models.IntegerField(null=True, blank=True, verbose_name='物流周期（天）')
+    order_time = models.IntegerField(null=True, blank=True, verbose_name='订货周期（天）')
     memorandum = models.CharField(max_length=360, null=True, blank=True, verbose_name='备注')
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='货品状态')
     package_unit = models.IntegerField(null=True, blank=True, verbose_name='装箱规格')
 
     class Meta:
-        unique_together = ('goods_name', 'size')
         verbose_name = 'B-产品-货品'
         verbose_name_plural = verbose_name
         db_table = 'base_goods_goods'
 
     def __str__(self):
-        return '{0}{1}'.format(self.goods_name, self.size)
+        return '{0}'.format(self.goods_name)
+
+    @classmethod
+    def verify_mandatory(cls, columns_key):
+        VERIFY_FIELD = ['manufactory', 'goods_id', 'goods_name', 'price']
+
+        for i in VERIFY_FIELD:
+            if i not in columns_key:
+                return 'verify_field error, must have mandatory field: "{}""'.format(i)
+        else:
+            return None

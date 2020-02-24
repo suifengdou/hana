@@ -11,160 +11,6 @@ import django.utils.timezone as timezone
 from db.base_model import BaseModel
 
 
-# 原始采购入库单
-class OriStockInInfo(BaseModel):
-
-    ORDER_STATUS = (
-        (0, '已取消'),
-        (1, '未递交'),
-        (2, '已递交'),
-    )
-
-    MISTAKE_TAG = (
-        (0, '正常'),
-        (1, '入库合并'),
-        (2, '重复递交'),
-        (3, '非法工厂'),
-        (4, '非法货品'),
-        (5, '非法仓库'),
-        (6, '采购单错误'),
-    )
-
-    detail_num = models.CharField(max_length=20, verbose_name='明细信息行号')
-    order_category = models.CharField(max_length=60, verbose_name='单据类型')
-    order_creator = models.CharField(max_length=60, verbose_name='创建人')
-    supplier = models.CharField(max_length=60, verbose_name='供货方')
-    create_date = models.DateTimeField(max_length=60, verbose_name='创建日期')
-    seller = models.CharField(max_length=60, verbose_name='结算方')
-    bs_category = models.CharField(max_length=60, verbose_name='业务类型')
-    order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
-    last_modifier = models.CharField(max_length=60, verbose_name='最后修改人')
-    payee = models.CharField(max_length=60, verbose_name='收款方')
-    stockin_time = models.DateTimeField(max_length=60, verbose_name='入库日期')
-    last_modify_time = models.DateTimeField(max_length=60, verbose_name='最后修改日期')
-    purchaser = models.CharField(max_length=60, verbose_name='采购组织')
-    demander = models.CharField(max_length=60, verbose_name='需求组织')
-    goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
-    goods_name = models.CharField(max_length=60, verbose_name='物料名称')
-    goods_size = models.CharField(max_length=60, verbose_name='规格型号')
-    goods_unit = models.CharField(max_length=60, verbose_name='库存单位')
-    quantity_receivable = models.IntegerField(default=0, verbose_name='应收数量')
-    quantity_received = models.IntegerField(verbose_name='实收数量')
-    batch_number = models.CharField(max_length=60, verbose_name='批号', db_index=True)
-    warehouse = models.CharField(max_length=60, verbose_name='仓库', db_index=True)
-    expiry_date = models.DateTimeField(max_length=60, verbose_name='有效期至')
-    produce_time = models.DateTimeField(max_length=60, verbose_name='生产日期')
-    memorandum = models.CharField(null=True, blank=True, max_length=200, verbose_name='备注')
-    origin_order_category = models.CharField(max_length=60, verbose_name='源单类型')
-    origin_order_id = models.CharField(max_length=60, verbose_name='源单编号')
-    payable_quantity = models.IntegerField(verbose_name='关联应付数量（计价基本）')
-    purchase_order_id = models.CharField(max_length=60, verbose_name='订单单号')
-    assist_quantity = models.IntegerField(verbose_name='实收数量(辅单位)')
-    multiple = models.IntegerField(verbose_name='主/辅换算率')
-    price = models.IntegerField(verbose_name='成本价')
-    storage = models.CharField(max_length=60, null=True, blank=True, verbose_name='仓位')
-
-    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='订单状态', db_index=True)
-    mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='错误标识')
-
-    class Meta:
-        verbose_name = 'wms-原始入库单查询'
-        verbose_name_plural = verbose_name
-        db_table = 'oms_ic_oristockin'
-
-    def __str__(self):
-        return "%s-%s" % (str(self.order_id), str(self.detail_num))
-
-
-class OriStockInUnhandle(OriStockInInfo):
-
-    class Meta:
-        verbose_name = 'wms-原始入库单未递交'
-        verbose_name_plural = verbose_name
-        proxy =True
-
-    @classmethod
-    def verify_mandatory(cls, columns_key):
-        VERIFY_FIELD = ['detail_num', 'stockin_order_id', 'last_modifier', 'payee',
-                        'stockin_time', 'last_modify_time', 'purchaser', 'demander',
-                        'goods_id', 'goods_name', 'goods_size', 'goods_unit',
-                        'quantity_receivable', 'quantity_received', 'batch_number', 'warehouse', 'expiry_date',
-                        'produce_time', 'origin_order_category', 'origin_order_id',
-                        'payable_quantity', 'purchase_order_id', 'assist_quantity', 'multiple', ]
-        for i in VERIFY_FIELD:
-            if i not in columns_key:
-                return 'verify_field error, must have mandatory field: "{}""'.format(i)
-        else:
-            return None
-
-
-# 原始销售出库单
-class OriStockOut(BaseModel):
-    ORDER_STATUS = (
-        (0, '已取消'),
-        (1, '待递交'),
-        (2, '已完成'),
-    )
-    ERROR_LIST = (
-        (0, '正常'),
-        (1, '重复递交'),
-        (2, '仓库非法'),
-        (3, '部门非法'),
-        (4, '货品非法'),
-    )
-
-    detail_num = models.CharField(max_length=20, verbose_name='明细信息行号')
-    order_id = models.CharField(max_length=30, verbose_name='单据编号')
-    customer = models.CharField(max_length=60, verbose_name='客户')
-    ori_order_status = models.CharField(max_length=20, verbose_name='单据状态')
-    ori_order_category = models.CharField(max_length=20, verbose_name='单据类型')
-    sale_organization = models.CharField(max_length=30, verbose_name='销售组织')
-    department = models.CharField(max_length=30, verbose_name='销售部门')
-    memorandum = models.CharField(null=True, blank=True, max_length=200, verbose_name='备注')
-    ori_creator = models.CharField(max_length=30, verbose_name='创建人')
-    date = models.DateTimeField(verbose_name='日期')
-    goods_id = models.CharField(max_length=50, verbose_name='物料编码')
-    goods_name = models.CharField(max_length=60, verbose_name='物料名称')
-    goods_size = models.CharField(max_length=50, verbose_name='规格型号')
-    quantity = models.IntegerField(verbose_name='实发数量')
-    warehouse = models.CharField(max_length=50, verbose_name='仓库')
-    price = models.CharField(max_length=20, verbose_name='含税单价')
-    amount = models.CharField(max_length=30, verbose_name='价税合计')
-    package_size = models.IntegerField(verbose_name='主辅换算率')
-
-    error_tag = models.SmallIntegerField(choices=ERROR_LIST, default=0, verbose_name='递交错误原因')
-    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
-
-    class Meta:
-        verbose_name = 'wms-原始出库单查询'
-        verbose_name_plural = verbose_name
-        db_table = 'oms_ic_oristockout'
-        unique_together = ('detail_num', 'order_id')
-
-    def __str__(self):
-        return "%s-%s" % (str(self.order_id), str(self.detail_num))
-
-
-class OriStockOutUnhandle(OriStockOut):
-    VERIFY_FIELD = ['detail_num', 'order_id', 'customer', 'ori_order_status', 'ori_order_category', 'sale_organization',
-                    'department', 'creator', 'create_date', 'goods_id', 'goods_name', 'goods_size', 'quantity',
-                    'warehouse', 'price', 'amount', 'package_size']
-
-    class Meta:
-        verbose_name = 'wms-原始出库单处理'
-        verbose_name_plural = verbose_name
-        proxy = True
-
-
-    @classmethod
-    def verify_mandatory(cls, columns_key):
-        for i in cls.VERIFY_FIELD:
-            if i not in columns_key:
-                return 'verify_field error, must have mandatory field: "{}""'.format(i)
-        else:
-            return None
-
-
 # 原始采购单
 class OriPurchaseInfo(BaseModel):
 
@@ -175,10 +21,10 @@ class OriPurchaseInfo(BaseModel):
     )
     MISTAKE_TAG = (
         (0, '正常'),
-        (1, '货数被并'),
-        (2, '导入重复'),
-        (3, '工厂非法'),
-        (4, '货品非法'),
+        (1, '重复递交'),
+        (2, '工厂非法'),
+        (3, '货品非法'),
+        (4, '递交失败'),
         (5, '其他错误'),
     )
 
@@ -230,6 +76,165 @@ class OriPurchaseUnhandle(OriPurchaseInfo):
             return None
 
 
+# 原始采购入库单
+class OriStockInInfo(BaseModel):
+
+    ORDER_STATUS = (
+        (0, '已取消'),
+        (1, '未递交'),
+        (2, '已递交'),
+    )
+
+    MISTAKE_TAG = (
+        (0, '正常'),
+        (1, '重复递交'),
+        (2, '供货商非法'),
+        (3, '部门非法'),
+        (4, '货品非法'),
+        (5, '仓库非法'),
+        (6, '实例保持错误'),
+    )
+
+    detail_num = models.CharField(max_length=20, verbose_name='明细信息行号')
+    order_category = models.CharField(max_length=60, verbose_name='单据类型')
+    ori_creator = models.CharField(max_length=60, verbose_name='创建人')
+    supplier = models.CharField(max_length=60, verbose_name='供货方')
+    create_date = models.DateTimeField(max_length=60, verbose_name='创建日期')
+    seller = models.CharField(max_length=60, verbose_name='结算方')
+    bs_category = models.CharField(max_length=60, verbose_name='业务类型')
+    order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
+    last_modifier = models.CharField(max_length=60, verbose_name='最后修改人')
+    payee = models.CharField(max_length=60, verbose_name='收款方')
+    stockin_date = models.DateTimeField(max_length=60, verbose_name='入库日期')
+    last_modify_time = models.DateTimeField(max_length=60, verbose_name='最后修改日期')
+    purchaser = models.CharField(max_length=60, verbose_name='采购组织')
+    department = models.CharField(max_length=60, verbose_name='收料部门')
+    goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
+    goods_name = models.CharField(max_length=60, verbose_name='物料名称')
+    goods_size = models.CharField(max_length=60, verbose_name='规格型号')
+    goods_unit = models.CharField(max_length=60, verbose_name='库存单位')
+    quantity_receivable = models.IntegerField(default=0, verbose_name='应收数量')
+    quantity_received = models.IntegerField(verbose_name='实收数量')
+    batch_number = models.CharField(max_length=60, null=True, blank=True, verbose_name='批号')
+    warehouse = models.CharField(max_length=60, verbose_name='仓库', db_index=True)
+    expiry_date = models.DateTimeField(max_length=60, null=True, blank=True, verbose_name='有效期至')
+    produce_date = models.DateTimeField(max_length=60, null=True, blank=True, verbose_name='生产日期')
+    memorandum = models.CharField(null=True, blank=True, max_length=200, verbose_name='备注')
+    origin_order_category = models.CharField(max_length=60, verbose_name='源单类型')
+    origin_order_id = models.CharField(max_length=60, verbose_name='源单编号')
+
+    purchase_order_id = models.CharField(max_length=60, null=True, blank=True, verbose_name='订单单号')
+    multiple = models.IntegerField(null=True, blank=True, verbose_name='主/辅换算率')
+    price = models.IntegerField(verbose_name='成本价')
+    storage = models.CharField(max_length=60, null=True, blank=True, verbose_name='仓位')
+
+    related_quantity = models.IntegerField(default=0, verbose_name='关联数量')
+
+    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='订单状态', db_index=True)
+    mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='错误标识')
+
+    class Meta:
+        verbose_name = 'wms-原始采购入库单'
+        verbose_name_plural = verbose_name
+        db_table = 'oms_ic_oristockin'
+
+    def __str__(self):
+        return "%s-%s" % (str(self.order_id), str(self.detail_num))
+
+
+class OriStockInUnhandle(OriStockInInfo):
+
+    class Meta:
+        verbose_name = 'wms-原始采购入库单未递交'
+        verbose_name_plural = verbose_name
+        proxy =True
+
+    @classmethod
+    def verify_mandatory(cls, columns_key):
+        VERIFY_FIELD = ['detail_num', 'order_category', 'ori_creator', 'supplier', 'create_date',
+                        'seller', 'bs_category', 'order_id', 'last_modifier', 'payee', 'stockin_date',
+                        'last_modify_time', 'purchaser', 'department',
+                        'goods_id', 'goods_name', 'goods_size', 'quantity_receivable', 'quantity_received', 'price',
+                        'batch_number', 'warehouse', 'storage', 'expiry_date', 'produce_date', 'origin_order_category',
+                        'origin_order_id', 'purchase_order_id', 'multiple']
+
+        for i in VERIFY_FIELD:
+            if i not in columns_key:
+                return 'verify_field error, must have mandatory field: "{}""'.format(i)
+        else:
+            return None
+
+
+# 原始销售出库单
+class OriStockOut(BaseModel):
+    ORDER_STATUS = (
+        (0, '已取消'),
+        (1, '待递交'),
+        (2, '已完成'),
+    )
+    ERROR_LIST = (
+        (0, '正常'),
+        (1, '重复递交'),
+        (2, '部门非法'),
+        (3, '货品非法'),
+        (4, '仓库非法'),
+        (5, '实例存储失败'),
+    )
+
+    detail_num = models.CharField(max_length=20, verbose_name='明细信息行号')
+    order_id = models.CharField(max_length=30, verbose_name='单据编号')
+    customer = models.CharField(max_length=60, verbose_name='客户')
+    ori_order_status = models.CharField(max_length=20, verbose_name='单据状态')
+    order_category = models.CharField(max_length=20, verbose_name='单据类型')
+    sale_organization = models.CharField(max_length=30, verbose_name='销售组织')
+    department = models.CharField(max_length=30, verbose_name='销售部门')
+    memorandum = models.CharField(null=True, blank=True, max_length=200, verbose_name='备注')
+    ori_creator = models.CharField(max_length=30, verbose_name='创建人')
+    date = models.DateTimeField(verbose_name='日期')
+    goods_id = models.CharField(max_length=50, verbose_name='物料编码')
+    goods_name = models.CharField(max_length=60, verbose_name='物料名称')
+    goods_size = models.CharField(max_length=50, verbose_name='规格型号')
+    quantity = models.IntegerField(verbose_name='实发数量')
+    warehouse = models.CharField(max_length=50, verbose_name='仓库')
+    price = models.FloatField(verbose_name='含税单价')
+    amount = models.FloatField(verbose_name='价税合计')
+    package_size = models.IntegerField(null=True, blank=True, verbose_name='主辅换算率')
+    buyer = models.CharField(max_length=60, null=True, blank=True, verbose_name='收货方')
+    address = models.CharField(max_length=240, null=True, blank=True, verbose_name='收货方地址')
+
+    mistake_tag = models.SmallIntegerField(choices=ERROR_LIST, default=0, verbose_name='错误原因')
+    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
+
+    class Meta:
+        verbose_name = 'wms-原始销售出库单查询'
+        verbose_name_plural = verbose_name
+        db_table = 'oms_ic_oristockout'
+        unique_together = ('detail_num', 'order_id')
+
+    def __str__(self):
+        return "%s-%s" % (str(self.order_id), str(self.detail_num))
+
+
+class OriStockOutUnhandle(OriStockOut):
+    VERIFY_FIELD = ['detail_num', 'date', 'order_id', 'customer', 'ori_order_status', 'order_category',
+                    'sale_organization', 'department', 'memorandum', 'buyer', 'address', 'ori_creator', 'goods_id',
+                    'goods_name', 'goods_size', 'quantity', 'warehouse', 'price', 'amount', 'package_size']
+
+    class Meta:
+        verbose_name = 'wms-原始销售出库单未递交'
+        verbose_name_plural = verbose_name
+        proxy = True
+
+
+    @classmethod
+    def verify_mandatory(cls, columns_key):
+        for i in cls.VERIFY_FIELD:
+            if i not in columns_key:
+                return 'verify_field error, must have mandatory field: "{}""'.format(i)
+        else:
+            return None
+
+
 # 原始其他出库单
 class OriNSStockout(BaseModel):
 
@@ -249,16 +254,16 @@ class OriNSStockout(BaseModel):
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号')
     category = models.CharField(max_length=30, verbose_name='单据类型')
-    customer = models.CharField(max_length=50, verbose_name='客户')
+    customer = models.CharField(null=True, blank=True, max_length=50, verbose_name='客户')
     department = models.CharField(max_length=50, verbose_name='领料部门')
     owner = models.CharField(max_length=50, verbose_name='货主')
     memorandum = models.CharField(null=True, blank=True, max_length=200, verbose_name='备注')
-    order_id = models.CharField(unique=True, max_length=60, verbose_name='单据编号')
+    order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
     ori_creator = models.CharField(max_length=30, verbose_name='创建人')
     date = models.DateTimeField(max_length='日期')
     goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     goods_name = models.CharField(max_length=60, verbose_name='物料名称')
-    goods_size = models.CharField(max_length=30, verbose_name='规格型号')
+    goods_size = models.CharField(null=True, blank=True, max_length=30, verbose_name='规格型号')
     quantity = models.IntegerField(verbose_name='实发数量')
     warehouse = models.CharField(max_length=50, verbose_name='发货仓库')
     store_id = models.CharField(max_length=30, verbose_name='店号')
@@ -279,7 +284,7 @@ class OriNSStockout(BaseModel):
 
 class OriNSSOUnhandle(OriNSStockout):
     VERIFY_FIELD = ['detail_num', 'category', 'customer', 'department', 'owner', 'order_id', 'date', 'ori_creator',
-                    'create_date', 'goods_id', 'goods_name', 'goods_size', 'quantity', 'warehosue', 'out_category']
+                    'goods_id', 'goods_name', 'goods_size', 'quantity', 'warehouse', 'out_category']
 
     class Meta:
         verbose_name = 'oms-原始未递交其他出库单'
@@ -400,9 +405,9 @@ class OriRefund(BaseModel):
     batch_number = models.CharField(max_length=60, verbose_name='批号')
     warehouse = models.CharField(max_length=60, verbose_name='仓库', db_index=True)
     expiry_date = models.DateTimeField(max_length=60, verbose_name='有效期至')
-    produce_time = models.DateTimeField(max_length=60, verbose_name='生产日期')
+    produce_date = models.DateTimeField(max_length=60, verbose_name='生产日期')
     price = models.FloatField(verbose_name='含税单价')
-    refund_information = models.CharField(max_length=150, verbose_name='退货单号')
+    refund_information = models.CharField(null=True, blank=True, max_length=150, verbose_name='退货单号')
     amount = models.FloatField(verbose_name='价税合计')
 
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
@@ -535,9 +540,9 @@ class OriAllocation(BaseModel):
     quantity = models.IntegerField(verbose_name='调拨数量')
     warehouse_out = models.CharField(max_length=60, verbose_name='调出仓库', db_index=True)
     warehouse_in = models.CharField(max_length=60, verbose_name='调入仓库', db_index=True)
-    produce_time = models.DateTimeField(max_length=60, verbose_name='生产日期')
-    expiry_time = models.DateTimeField(max_length=60, verbose_name='有效期至')
-    stockin_time = models.DateTimeField(max_length=60, verbose_name='入库日期')
+    produce_date = models.DateTimeField(max_length=60, verbose_name='生产日期')
+    expiry_date = models.DateTimeField(max_length=60, verbose_name='有效期至')
+    stockin_date = models.DateTimeField(max_length=60, verbose_name='入库日期')
     customer = models.CharField(max_length=50, verbose_name='客户')
 
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
@@ -556,13 +561,12 @@ class OriAllocation(BaseModel):
 class OriALUnhandle(OriAllocation):
     VERIFY_FIELD = ['detail_num', 'order_id', 'category', 'trans_in', 'date', 'trans_out', 'department', 'memorandum',
                     'ori_creator', 'goods_id', 'goods_name', 'goods_size', 'batch_num', 'quantity', 'warehouse_out',
-                    'warehouse_in', 'produce_time', 'expiry_time', 'stockin_time', 'customer']
+                    'warehouse_in', 'produce_date', 'expiry_date', 'stockin_date', 'customer']
 
     class Meta:
         verbose_name = 'oms-原始未递交直接调拨单'
         verbose_name_plural = verbose_name
         proxy = True
-
 
     @classmethod
     def verify_mandatory(cls, columns_key):
@@ -604,8 +608,8 @@ class OriSurplus(BaseModel):
     quantity = models.IntegerField(verbose_name='盘盈数量')
     warehouse = models.CharField(max_length=60, verbose_name='仓库', db_index=True)
     batch_num = models.CharField(max_length=60, verbose_name='批号')
-    produce_time = models.DateTimeField(max_length=60, verbose_name='生产日期')
-    expiry_time = models.DateTimeField(max_length=60, verbose_name='到期日')
+    produce_date = models.DateTimeField(max_length=60, verbose_name='生产日期')
+    expiry_date = models.DateTimeField(max_length=60, verbose_name='到期日')
 
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
     mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='问题原因')
@@ -622,8 +626,8 @@ class OriSurplus(BaseModel):
 
 class OriSUUnhandle(OriSurplus):
     VERIFY_FIELD = ['detail_num', 'order_id', 'category', 'date', 'ori_creator', 'owner', 'memorandum', 'goods_id',
-                    'goods_name', 'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_time',
-                    'expiry_time']
+                    'goods_name', 'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date',
+                    'expiry_date']
 
     class Meta:
         verbose_name = 'oms-原始未递交盘盈单'
@@ -656,7 +660,7 @@ class OirLoss(BaseModel):
         (5, '其他错误'),
     )
 
-    detail_num  = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
+    detail_num = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
     order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
     category = models.CharField(max_length=60, verbose_name='单据类型')
     date = models.DateTimeField(max_length=60, verbose_name='日期')
@@ -671,8 +675,8 @@ class OirLoss(BaseModel):
     quantity = models.IntegerField(verbose_name='盘亏数量')
     warehouse = models.CharField(max_length=60, verbose_name='仓库', db_index=True)
     batch_num = models.CharField(max_length=60, verbose_name='批号')
-    produce_time = models.DateTimeField(max_length=60, verbose_name='生产日期')
-    expiry_time = models.DateTimeField(max_length=60, verbose_name='到期日')
+    produce_date = models.DateTimeField(max_length=60, verbose_name='生产日期')
+    expiry_date = models.DateTimeField(max_length=60, verbose_name='到期日')
 
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
     mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='问题原因')
@@ -689,8 +693,8 @@ class OirLoss(BaseModel):
 
 class OriLOUnhandle(OirLoss):
     VERIFY_FIELD = ['detail_num', 'order_id', 'category', 'date', 'ori_creator', 'owner', 'memorandum', 'goods_id',
-                    'goods_name', 'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_time',
-                    'expiry_time']
+                    'goods_name', 'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date',
+                    'expiry_date']
 
     class Meta:
         verbose_name = 'oms-原始未递交盘亏单'
