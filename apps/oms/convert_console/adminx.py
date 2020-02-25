@@ -32,7 +32,7 @@ from apps.base.goods.models import GoodsInfo
 class CovertSIUnhandleAdmin(object):
     list_display = ['order_id', 'mistake_tag', 'order_status', 'order_category', 'origin_order_category', 'supplier',
                     'department', 'goods_id','goods_name', 'quantity_receivable', 'quantity_received', 'payee',
-                    'warehouse', 'origin_order_id',  'last_modifier',  'stockin_date', 'purchaser',
+                    'warehouse', 'origin_order_id',  'ori_creator',  'stockin_date', 'purchaser',
                     'batch_number',  'expiry_date', 'produce_date', 'memorandum',
                     'price', 'quantity_linking']
     list_filter = ['order_category', 'department__name', 'create_date', 'supplier__company_name', 'stockin_date',
@@ -43,7 +43,7 @@ class CovertSIUnhandleAdmin(object):
 class CovertSIAdmin(object):
     list_display = ['order_id', 'mistake_tag', 'order_status', 'order_category', 'origin_order_category', 'supplier',
                     'department', 'goods_id','goods_name', 'quantity_receivable', 'quantity_received', 'payee',
-                    'warehouse', 'origin_order_id',  'last_modifier',  'stockin_date', 'purchaser',
+                    'warehouse', 'origin_order_id',  'ori_creator',  'stockin_date', 'purchaser',
                     'batch_number',  'expiry_date', 'produce_date', 'memorandum',
                     'price', 'quantity_linking']
     list_filter = ['order_category', 'department__name', 'create_date', 'supplier__company_name', 'stockin_date',

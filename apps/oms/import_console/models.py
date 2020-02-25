@@ -92,7 +92,7 @@ class OriStockInInfo(BaseModel):
         (3, '部门非法'),
         (4, '货品非法'),
         (5, '仓库非法'),
-        (6, '实例保持错误'),
+        (6, '实例保存错误'),
     )
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号')
@@ -245,15 +245,15 @@ class OriNSStockout(BaseModel):
     )
     MISTAKE_TAG = (
         (0, '正常'),
-        (1, '货数被并'),
-        (2, '导入重复'),
-        (3, '工厂非法'),
-        (4, '货品非法'),
-        (5, '其他错误'),
+        (1, '导入重复'),
+        (2, '部门非法'),
+        (3, '货品非法'),
+        (4, '仓库非法'),
+        (5, '实例保存错误'),
     )
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号')
-    category = models.CharField(max_length=30, verbose_name='单据类型')
+    order_category = models.CharField(max_length=30, verbose_name='单据类型')
     customer = models.CharField(null=True, blank=True, max_length=50, verbose_name='客户')
     department = models.CharField(max_length=50, verbose_name='领料部门')
     owner = models.CharField(max_length=50, verbose_name='货主')
@@ -283,7 +283,7 @@ class OriNSStockout(BaseModel):
 
 
 class OriNSSOUnhandle(OriNSStockout):
-    VERIFY_FIELD = ['detail_num', 'category', 'customer', 'department', 'owner', 'order_id', 'date', 'ori_creator',
+    VERIFY_FIELD = ['detail_num', 'order_category', 'customer', 'department', 'owner', 'order_id', 'date', 'ori_creator',
                     'goods_id', 'goods_name', 'goods_size', 'quantity', 'warehouse', 'out_category']
 
     class Meta:
@@ -311,17 +311,18 @@ class OriNPStockIn(BaseModel):
     )
     MISTAKE_TAG = (
         (0, '正常'),
-        (1, '货数被并'),
-        (2, '导入重复'),
-        (3, '工厂非法'),
+        (1, '重复递交'),
+        (2, '供货商非法'),
+        (3, '部门非法'),
         (4, '货品非法'),
-        (5, '其他错误'),
+        (5, '仓库非法'),
+        (6, '实例保存错误'),
     )
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
     order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
-    category = models.CharField(max_length=60, verbose_name='单据类型')
-    ori_creator = models.CharField(max_length=60, verbose_name='创建人')
+    order_category = models.CharField(max_length=60, null=True, blank=True, verbose_name='单据类型')
+    ori_creator = models.CharField(max_length=60, null=True, blank=True, verbose_name='创建人')
     department = models.CharField(max_length=30, verbose_name='部门')
     owner = models.CharField(max_length=50, verbose_name='货主')
     date = models.DateTimeField(max_length=60, verbose_name='日期')
@@ -333,7 +334,7 @@ class OriNPStockIn(BaseModel):
     batch_number = models.CharField(max_length=60, verbose_name='批号')
     warehouse = models.CharField(max_length=60, verbose_name='仓库', db_index=True)
     expiry_date = models.DateTimeField(max_length=60, verbose_name='有效期至')
-    produce_time = models.DateTimeField(max_length=60, verbose_name='生产日期')
+    produce_date = models.DateTimeField(max_length=60, verbose_name='生产日期')
     memorandum = models.CharField(null=True, blank=True, max_length=200, verbose_name='备注')
     in_category = models.CharField(max_length=30, verbose_name='入库类型')
 
@@ -351,7 +352,7 @@ class OriNPStockIn(BaseModel):
 
 
 class OriNPSIUnhandle(OriNPStockIn):
-    VERIFY_FIELD = ['detail_num', 'order_id', 'category', 'date', 'department', 'ori_creator', 'owner', 'memorandum',
+    VERIFY_FIELD = ['detail_num', 'order_id', 'order_category', 'date', 'department', 'ori_creator', 'owner', 'memorandum',
                     'goods_id', 'goods_name', 'goods_size', 'quantity', 'warehouse', 'batch_number', 'produce_time',
                     'expiry_date', 'in_category']
 

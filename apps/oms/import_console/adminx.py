@@ -463,7 +463,7 @@ class OriSIAction(BaseActionView):
                     order.origin_order_category = obj.order_category
                     order.origin_order_id = obj.order_id
                     fields_list = ['order_creator', 'create_date', 'seller',
-                                   'bs_category','last_modifier', 'payee', 'stockin_date',
+                                   'bs_category','ori_creator', 'payee', 'stockin_date',
                                    'purchaser', 'goods_id', 'quantity_receivable', 'quantity_received', 'batch_number',
                                    'expiry_date', 'produce_date', 'memorandum', 'price', ]
 
@@ -496,7 +496,7 @@ class OriStockInUnhandleAdmin(object):
                     'storage', 'expiry_date', 'produce_date', 'purchase_order_id', 'multiple', 'ori_creator']
 
     list_filter = ['mistake_tag', 'order_status', 'ori_creator', 'supplier', 'create_date', 'department',
-                   'seller', 'bs_category', 'last_modifier', 'payee', 'stockin_date', 'last_modify_time',
+                   'seller', 'bs_category', 'payee', 'stockin_date', 'ori_creator',
                    'purchaser', 'goods_id', 'goods_name', 'quantity_received', 'price',
                    'batch_number', 'warehouse', 'expiry_date', 'produce_date', 'purchase_order_id', 'multiple']
 
@@ -657,7 +657,6 @@ class OriStockInUnhandleAdmin(object):
                 report_dic["error"].append('%s单据重复导入' % order_id)
                 continue
 
-
             row['create_date'] = datetime.datetime.strptime(row['create_date'], '%Y/%m/%d')
             row['stockin_date'] = datetime.datetime.strptime(row['stockin_date'], '%Y/%m/%d')
             row['last_modify_time'] = datetime.datetime.strptime(row['last_modify_time'], '%Y/%m/%d')
@@ -698,7 +697,7 @@ class OriStockInInfoAdmin(object):
                     'storage', 'expiry_date', 'produce_date', 'purchase_order_id', 'multiple', 'ori_creator']
 
     list_filter = ['mistake_tag', 'order_status', 'ori_creator', 'supplier', 'create_date', 'department',
-                   'seller', 'bs_category', 'last_modifier', 'payee', 'stockin_date', 'last_modify_time',
+                   'seller', 'bs_category', 'payee', 'stockin_date', 'ori_creator',
                    'purchaser', 'goods_id', 'goods_name', 'quantity_received', 'price',
                    'batch_number', 'warehouse', 'expiry_date', 'produce_date', 'purchase_order_id', 'multiple']
     readonly_fields = ['order_id', 'mistake_tag', 'order_status', 'supplier', 'create_date', 'purchaser',
@@ -998,9 +997,105 @@ class OriStockOutAdmin(object):
     search_fields = ['order_id']
 
 
+# 递交原始其他出库单
+class OriNSSOAction(BaseActionView):
+    action_name = "submit_so_ori"
+    description = "提交选中的订单"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    modify_models_batch = False
+
+    @filter_hook
+    def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                for obj in queryset:
+                    self.log('change', '', obj)
+                    order_id = '{0}-{1}'.format(str(obj.order_id), str(obj.detail_num))
+                    if CovertSO.objects.filter(order_id=order_id).exists():
+                        self.message_user("单号%s递交重复，检查问题" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 1
+                        obj.save()
+                        continue
+                    order = CovertSO()
+                    order.order_id = order_id
+
+                    department = obj.department
+                    _q_department = DepartmentInfo.objects.filter(name=department)
+                    if _q_department.exists():
+                        order.department = _q_department[0]
+                    else:
+                        self.message_user("单号%s部门非法，查看系统是否有此部门" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 2
+                        obj.save()
+                        continue
+                    goods = obj.goods_id
+                    _q_goods = GoodsInfo.objects.filter(goods_id=goods)
+                    if _q_goods.exists():
+                        order.goods_name = _q_goods[0]
+                    else:
+                        self.message_user("单号%s货品非法，查看系统是否有货品" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 3
+                        obj.save()
+                        continue
+                    warehosue = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehosue)
+                    if _q_warehouse.exists():
+                        order.warehouse = _q_warehouse[0]
+                    else:
+                        self.message_user("单号%s仓库错误，查看系统是否有此仓库" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 4
+                        obj.save()
+                        continue
+                    if obj.customer is None:
+                        obj.customer = '零售顾客'
+                    order.order_category = order.department.category
+                    order.origin_order_category = obj.order_category
+                    order.origin_order_id = obj.order_id
+                    order.price = 0
+                    order.amount = 0
+                    order.memorandum = '店号：{0}-出库类型：{1}-备注{2}'.format(str(obj.store_id), str(obj.out_category), str(obj.memorandum))
+                    if len(order.memorandum) > 300:
+                        order.memorandum = order.memorandum[:300]
+                    fields_list = ['customer', 'ori_creator', 'date', 'goods_id', 'quantity', 'buyer', 'address']
+
+                    for k in fields_list:
+                        if hasattr(obj, k):
+                            setattr(order, k, getattr(obj, k))  # 更新对象属性对应键值
+                    try:
+                        order.creator = self.request.user.username
+                        order.save()
+                    except Exception as e:
+                        self.message_user("单号%s实例保存出错：%s" % (obj.order_id, e), "error")
+                        n -= 1
+                        obj.mistake_tag = 5
+                        obj.save()
+                        continue
+                    obj.order_status = 2
+                    obj.mistake_tag = 0
+                    obj.save()
+
+            self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
+        return None
+
+
 # #####未递交原始其他出库单#####
 class OriNSSOUnhandleAdmin(object):
-    list_display = ['order_status', 'mistake_tag', 'detail_num', 'category', 'customer', 'department', 'owner',
+    list_display = ['order_status', 'mistake_tag', 'detail_num', 'order_category', 'customer', 'department', 'owner',
                     'order_id', 'date', 'ori_creator', 'goods_id', 'goods_name', 'goods_size',
                     'quantity', 'warehouse', 'out_category']
 
@@ -1008,7 +1103,7 @@ class OriNSSOUnhandleAdmin(object):
                    'goods_id', 'goods_name', 'quantity', 'warehouse', 'out_category']
 
     search_fields = ['order_id', ]
-    actions = []
+    actions = [OriNSSOAction, ]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -1029,7 +1124,7 @@ class OriNSSOUnhandleAdmin(object):
     def handle_upload_file(self, _file):
         INIT_FIELDS_DIC = {
             '明细信息行号': 'detail_num',
-            '单据类型': 'category',
+            '单据类型': 'order_category',
             '客户': 'customer',
             '领料部门': 'department',
             '货主': 'owner',
@@ -1186,7 +1281,7 @@ class OriNSSOUnhandleAdmin(object):
 
 # 原始其他出库单
 class OriNSStockoutAdmin(object):
-    list_display = ['order_status', 'mistake_tag', 'detail_num', 'category', 'customer', 'department', 'owner',
+    list_display = ['order_status', 'mistake_tag', 'detail_num', 'order_category', 'customer', 'department', 'owner',
                     'order_id', 'date', 'ori_creator', 'goods_id', 'goods_name', 'goods_size',
                     'quantity', 'warehouse', 'out_category']
 
@@ -1200,17 +1295,128 @@ class OriNSStockoutAdmin(object):
         return False
 
 
+# 递交原始其他入库单
+class OriNPSIAction(BaseActionView):
+    action_name = "submit_si_ori"
+    description = "提交选中的订单"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    modify_models_batch = False
+
+    @filter_hook
+    def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                for obj in queryset:
+                    self.log('change', '', obj)
+                    order_id = '{0}-{1}'.format(str(obj.order_id), str(obj.detail_num))
+                    if CovertSI.objects.filter(order_id=order_id).exists():
+                        self.message_user("单号%s递交重复，检查问题" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 1
+                        obj.save()
+                        continue
+                    order = CovertSI()
+                    order.order_id = order_id
+                    supplier = obj.owner
+                    order.payee = supplier
+                    order.purchaser = supplier
+                    _q_supplier = CompanyInfo.objects.filter(company_name=supplier)
+                    if _q_supplier.exists():
+                        order.supplier = _q_supplier[0]
+                    else:
+                        self.message_user("单号%s供货商非法，查看系统是否有此供货商" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 2
+                        obj.save()
+                        continue
+                    department = obj.department
+                    _q_department = DepartmentInfo.objects.filter(name=department)
+                    if _q_department.exists():
+                        order.department = _q_department[0]
+                    else:
+                        self.message_user("单号%s部门非法，查看系统是否有此部门" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 3
+                        obj.save()
+                        continue
+                    goods = obj.goods_id
+                    _q_goods = GoodsInfo.objects.filter(goods_id=goods)
+                    if _q_goods.exists():
+                        order.goods_name = _q_goods[0]
+                    else:
+                        self.message_user("单号%s货品非法，查看系统是否有货品" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 4
+                        obj.save()
+                        continue
+                    warehosue = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehosue)
+                    if _q_warehouse.exists():
+                        order.warehouse = _q_warehouse[0]
+                    else:
+                        self.message_user("单号%s仓库错误，查看系统是否有此仓库" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 5
+                        obj.save()
+                        continue
+                    order.memorandum = '入库类型:{0}-备注:{1}'.format(obj.in_category, obj.memorandum)
+                    if len(str(order.memorandum)) > 300:
+                        order.memorandum = order.memorandum[:300]
+                    order.price = 0
+
+                    order.quantity_received = obj.quantity
+                    order.quantity_receivable = obj.quantity
+                    order.order_category = order.department.category
+                    order.origin_order_category = obj.order_category
+                    order.create_date = obj.date
+                    order.stockin_date = obj.date
+                    order.origin_order_id = obj.order_id
+
+
+                    fields_list = ['ori_creator', 'goods_id', 'batch_number', 'expiry_date', 'produce_date']
+
+                    for k in fields_list:
+                        if hasattr(obj, k):
+                            setattr(order, k, getattr(obj, k))  # 更新对象属性对应键值
+                    try:
+                        order.creator = self.request.user.username
+                        order.save()
+                    except Exception as e:
+                        self.message_user("单号%s实例保存出错：%s" % (obj.order_id, e), "error")
+                        n -= 1
+                        obj.mistake_tag = 6
+                        obj.save()
+                        continue
+                    obj.order_status = 2
+                    obj.mistake_tag = 0
+                    obj.save()
+
+            self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
+        return None
+
+
 # #####未递交原始其他入库单#####
 class OriNPSIUnhandleAdmin(object):
-    list_display = ['order_status', 'mistake_tag', 'detail_num', 'order_id', 'category', 'date', 'department',
+    list_display = ['order_status', 'mistake_tag', 'detail_num', 'order_id', 'order_category', 'date', 'department',
                     'ori_creator', 'owner', 'memorandum', 'goods_id', 'goods_name', 'goods_size', 'quantity',
-                    'warehouse', 'batch_number', 'produce_time', 'expiry_date', 'in_category']
+                    'warehouse', 'batch_number', 'produce_date', 'expiry_date', 'in_category']
 
     list_filter = ['mistake_tag', 'order_status', 'date', 'department', 'ori_creator', 'memorandum', 'goods_id',
-                   'goods_name', 'quantity', 'warehouse', 'batch_number', 'produce_time', 'expiry_date', 'in_category']
+                   'goods_name', 'quantity', 'warehouse', 'batch_number', 'produce_date', 'expiry_date', 'in_category']
 
     search_fields = ['order_id', ]
-    actions = []
+    actions = [OriNPSIAction, ]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -1232,7 +1438,7 @@ class OriNPSIUnhandleAdmin(object):
         INIT_FIELDS_DIC = {
             '明细信息行号': 'detail_num',
             '单据编号': 'order_id',
-            '单据类型': 'category',
+            '单据类型': 'order_category',
             '日期': 'date',
             '部门': 'department',
             '创建人': 'ori_creator',
@@ -1244,7 +1450,7 @@ class OriNPSIUnhandleAdmin(object):
             '实收数量': 'quantity',
             '收货仓库': 'warehouse',
             '批号': 'batch_number',
-            '生产日期': 'produce_time',
+            '生产日期': 'produce_date',
             '有效期至': 'expiry_date',
             '入库类型': 'in_category'
         }
@@ -1355,7 +1561,7 @@ class OriNPSIUnhandleAdmin(object):
                 continue
 
             row['date'] = datetime.datetime.strptime(row['date'], '%Y/%m/%d')
-            row['produce_time'] = datetime.datetime.strptime(row['produce_time'], '%Y/%m/%d')
+            row['produce_date'] = datetime.datetime.strptime(row['produce_date'], '%Y/%m/%d')
             row['expiry_date'] = datetime.datetime.strptime(row['expiry_date'], '%Y/%m/%d')
 
             for k, v in row.items():
@@ -1390,10 +1596,10 @@ class OriNPSIUnhandleAdmin(object):
 class OriNPStockInAdmin(object):
     list_display = ['order_status', 'mistake_tag', 'detail_num', 'order_id', 'category', 'date', 'department',
                     'ori_creator', 'owner', 'memorandum', 'goods_id', 'goods_name', 'goods_size', 'quantity',
-                    'warehouse', 'batch_number', 'produce_time', 'expiry_date', 'in_category']
+                    'warehouse', 'batch_number', 'produce_date', 'expiry_date', 'in_category']
 
     list_filter = ['mistake_tag', 'order_status', 'date', 'department', 'ori_creator', 'memorandum', 'goods_id',
-                   'goods_name', 'quantity', 'warehouse', 'batch_number', 'produce_time', 'expiry_date', 'in_category']
+                   'goods_name', 'quantity', 'warehouse', 'batch_number', 'produce_date', 'expiry_date', 'in_category']
 
     search_fields = ['order_id', ]
 
