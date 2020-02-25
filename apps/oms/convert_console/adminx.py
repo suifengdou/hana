@@ -54,7 +54,7 @@ class CovertSIAdmin(object):
 class CovertSOUnhandleAdmin(object):
     list_display = ['order_id', 'mistake_tag', 'order_status', 'customer', 'order_category', 'origin_order_category', 'origin_order_id',
                     'sale_organization', 'department', 'memorandum', 'ori_creator', 'date', 'goods_id', 'goods_name',
-                    'quantity', 'warehouse', 'price', 'amount', 'package_size', 'buyer', 'address']
+                    'quantity', 'warehouse', 'price', 'amount', 'buyer', 'address']
 
     list_filter = ['mistake_tag', 'order_status', 'order_category', 'department__name', 'goods_name__goods_name',
                    'warehouse__warehouse_name', 'goods_id', 'sale_organization',  'date']
@@ -65,7 +65,7 @@ class CovertSOUnhandleAdmin(object):
 class CovertSOAdmin(object):
     list_display = ['order_id', 'customer', 'order_category', 'origin_order_category', 'origin_order_id',
                     'sale_organization', 'department', 'memorandum', 'ori_creator', 'date', 'goods_id', 'goods_name',
-                    'quantity', 'warehouse', 'price', 'amount', 'package_size', 'buyer', 'address']
+                    'quantity', 'warehouse', 'price', 'amount', 'buyer', 'address']
 
     list_filter = ['mistake_tag', 'order_status', 'order_category', 'department__name', 'goods_name__goods_name',
                    'warehouse__warehouse_name', 'goods_id', 'sale_organization',  'date']

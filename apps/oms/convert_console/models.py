@@ -30,7 +30,7 @@ class CovertSI(BaseModel):
         (3, '保存库存错误'),
         (4, '货品错误'),
         (5, '采购单错误'),
-        (5, '采购单数量错误'),
+        (6, '采购单数量错误'),
     )
     CATEGORY = (
         (0, '独立入库'),
@@ -115,7 +115,6 @@ class CovertSO(BaseModel):
     warehouse = models.ForeignKey(WarehouseInfo, on_delete=models.CASCADE, verbose_name='仓库')
     price = models.FloatField(verbose_name='含税单价')
     amount = models.FloatField(verbose_name='价税合计')
-    package_size = models.IntegerField(null=True, blank=True, verbose_name='主辅换算率')
     buyer = models.CharField(max_length=60, null=True, blank=True, verbose_name='收货方')
     address = models.CharField(max_length=240, null=True, blank=True, verbose_name='收货方地址')
 

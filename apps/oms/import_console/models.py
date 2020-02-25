@@ -381,16 +381,17 @@ class OriRefund(BaseModel):
     )
     MISTAKE_TAG = (
         (0, '正常'),
-        (1, '货数被并'),
-        (2, '导入重复'),
-        (3, '工厂非法'),
+        (1, '重复递交'),
+        (2, '供货商非法'),
+        (3, '部门非法'),
         (4, '货品非法'),
-        (5, '其他错误'),
+        (5, '仓库非法'),
+        (6, '实例保存错误'),
     )
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
     order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
-    category = models.CharField(max_length=60, verbose_name='单据类型')
+    order_category = models.CharField(max_length=60, verbose_name='单据类型')
     ori_creator = models.CharField(max_length=60, verbose_name='创建人')
     department = models.CharField(max_length=30, verbose_name='销售部门')
     owner = models.CharField(max_length=50, verbose_name='货主')
@@ -425,7 +426,7 @@ class OriRefund(BaseModel):
 
 
 class OriRefundUnhandle(OriRefund):
-    VERIFY_FIELD = ['detail_num', 'category', 'date', 'order_id', 'customer', 'buyer', 'ori_creator', 'goods_id',
+    VERIFY_FIELD = ['detail_num', 'order_category', 'date', 'order_id', 'customer', 'buyer', 'ori_creator', 'goods_id',
                     'goods_name', 'goods_size', 'quantity', 'refund_date', 'warehouse', 'batch_num', 'produce_date',
                     'expiry_date', 'price', 'amount', 'owner']
 
@@ -453,15 +454,15 @@ class OriPurRefund(BaseModel):
     )
     MISTAKE_TAG = (
         (0, '正常'),
-        (1, '货数被并'),
-        (2, '导入重复'),
-        (3, '工厂非法'),
-        (4, '货品非法'),
-        (5, '其他错误'),
+        (1, '导入重复'),
+        (2, '部门非法'),
+        (3, '货品非法'),
+        (4, '仓库非法'),
+        (5, '实例保存错误'),
     )
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
-    category = models.CharField(max_length=60, verbose_name='单据类型')
+    order_category = models.CharField(max_length=60, verbose_name='单据类型')
     ori_creator = models.CharField(max_length=60, verbose_name='创建人')
     order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
     date = models.DateTimeField(max_length=60, verbose_name='日期')
@@ -491,7 +492,7 @@ class OriPurRefund(BaseModel):
 
 
 class OriPRUnhandle(OriPurRefund):
-    VERIFY_FIELD = ['detail_num', 'category', 'ori_creator', 'order_id', 'date', 'owner', 'department', 'goods_id',
+    VERIFY_FIELD = ['detail_num', 'order_category', 'ori_creator', 'order_id', 'date', 'owner', 'department', 'goods_id',
                     'goods_name', 'goods_memo', 'batch_num', 'quantity', 'warehouse', 'memorandum', 'price', 'amount']
 
     class Meta:
@@ -518,16 +519,17 @@ class OriAllocation(BaseModel):
     )
     MISTAKE_TAG = (
         (0, '正常'),
-        (1, '货数被并'),
-        (2, '导入重复'),
-        (3, '工厂非法'),
+        (1, '重复递交'),
+        (2, '供货商非法'),
+        (3, '部门非法'),
         (4, '货品非法'),
-        (5, '其他错误'),
+        (5, '仓库非法'),
+        (6, '实例保存错误'),
     )
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
     order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
-    category = models.CharField(max_length=60, verbose_name='单据类型')
+    order_category = models.CharField(max_length=60, verbose_name='单据类型')
     trans_in = models.CharField(max_length=50, verbose_name='调入库存组织')
     date = models.DateTimeField(max_length=60, verbose_name='日期')
     trans_out = models.CharField(max_length=50, verbose_name='调出库存组织')
@@ -560,7 +562,7 @@ class OriAllocation(BaseModel):
 
 
 class OriALUnhandle(OriAllocation):
-    VERIFY_FIELD = ['detail_num', 'order_id', 'category', 'trans_in', 'date', 'trans_out', 'department', 'memorandum',
+    VERIFY_FIELD = ['detail_num', 'order_id', 'order_category', 'trans_in', 'date', 'trans_out', 'department', 'memorandum',
                     'ori_creator', 'goods_id', 'goods_name', 'goods_size', 'batch_num', 'quantity', 'warehouse_out',
                     'warehouse_in', 'produce_date', 'expiry_date', 'stockin_date', 'customer']
 
@@ -596,7 +598,7 @@ class OriSurplus(BaseModel):
 
     detail_num  = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
     order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
-    category = models.CharField(max_length=60, verbose_name='单据类型')
+    order_category = models.CharField(max_length=60, verbose_name='单据类型')
     date = models.DateTimeField(max_length=60, verbose_name='日期')
     ori_creator = models.CharField(max_length=60, verbose_name='创建人')
     owner = models.CharField(max_length=50, verbose_name='货主')
@@ -626,7 +628,7 @@ class OriSurplus(BaseModel):
 
 
 class OriSUUnhandle(OriSurplus):
-    VERIFY_FIELD = ['detail_num', 'order_id', 'category', 'date', 'ori_creator', 'owner', 'memorandum', 'goods_id',
+    VERIFY_FIELD = ['detail_num', 'order_id', 'order_category', 'date', 'ori_creator', 'owner', 'memorandum', 'goods_id',
                     'goods_name', 'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date',
                     'expiry_date']
 
@@ -663,7 +665,7 @@ class OirLoss(BaseModel):
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
     order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
-    category = models.CharField(max_length=60, verbose_name='单据类型')
+    order_category = models.CharField(max_length=60, verbose_name='单据类型')
     date = models.DateTimeField(max_length=60, verbose_name='日期')
     ori_creator = models.CharField(max_length=60, verbose_name='创建人')
     owner = models.CharField(max_length=50, verbose_name='货主')
@@ -693,7 +695,7 @@ class OirLoss(BaseModel):
 
 
 class OriLOUnhandle(OirLoss):
-    VERIFY_FIELD = ['detail_num', 'order_id', 'category', 'date', 'ori_creator', 'owner', 'memorandum', 'goods_id',
+    VERIFY_FIELD = ['detail_num', 'order_id', 'order_category', 'date', 'ori_creator', 'owner', 'memorandum', 'goods_id',
                     'goods_name', 'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date',
                     'expiry_date']
 
