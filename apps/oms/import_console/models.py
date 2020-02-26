@@ -172,13 +172,13 @@ class OriStockOut(BaseModel):
         (1, '待递交'),
         (2, '已完成'),
     )
-    ERROR_LIST = (
+    MISTAKE_TAG = (
         (0, '正常'),
-        (1, '重复递交'),
+        (1, '导入重复'),
         (2, '部门非法'),
         (3, '货品非法'),
         (4, '仓库非法'),
-        (5, '实例存储失败'),
+        (5, '实例保存错误'),
     )
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号')
@@ -202,7 +202,7 @@ class OriStockOut(BaseModel):
     buyer = models.CharField(max_length=60, null=True, blank=True, verbose_name='收货方')
     address = models.CharField(max_length=240, null=True, blank=True, verbose_name='收货方地址')
 
-    mistake_tag = models.SmallIntegerField(choices=ERROR_LIST, default=0, verbose_name='错误原因')
+    mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='错误原因')
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
 
     class Meta:
@@ -589,11 +589,12 @@ class OriSurplus(BaseModel):
     )
     MISTAKE_TAG = (
         (0, '正常'),
-        (1, '货数被并'),
-        (2, '导入重复'),
-        (3, '工厂非法'),
+        (1, '重复递交'),
+        (2, '供货商非法'),
+        (3, '部门非法'),
         (4, '货品非法'),
-        (5, '其他错误'),
+        (5, '仓库非法'),
+        (6, '实例保存错误'),
     )
 
     detail_num  = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
@@ -656,11 +657,11 @@ class OirLoss(BaseModel):
     )
     MISTAKE_TAG = (
         (0, '正常'),
-        (1, '货数被并'),
-        (2, '导入重复'),
-        (3, '工厂非法'),
-        (4, '货品非法'),
-        (5, '其他错误'),
+        (1, '重复递交'),
+        (2, '部门非法'),
+        (3, '货品非法'),
+        (4, '仓库非法'),
+        (5, '实例存储失败'),
     )
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)

@@ -449,8 +449,8 @@ class OriSIAction(BaseActionView):
                         obj.mistake_tag = 4
                         obj.save()
                         continue
-                    warehosue = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehosue)
+                    warehouse = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -757,8 +757,8 @@ class OriSOAction(BaseActionView):
                         obj.mistake_tag = 3
                         obj.save()
                         continue
-                    warehosue = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehosue)
+                    warehouse = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -1049,8 +1049,8 @@ class OriNSSOAction(BaseActionView):
                         obj.mistake_tag = 3
                         obj.save()
                         continue
-                    warehosue = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehosue)
+                    warehouse = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -1358,8 +1358,8 @@ class OriNPSIAction(BaseActionView):
                         obj.mistake_tag = 4
                         obj.save()
                         continue
-                    warehosue = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehosue)
+                    warehouse = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -1671,8 +1671,8 @@ class OriRefundAction(BaseActionView):
                         obj.mistake_tag = 4
                         obj.save()
                         continue
-                    warehosue = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehosue)
+                    warehouse = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -1989,8 +1989,8 @@ class OriPRAction(BaseActionView):
                         obj.mistake_tag = 3
                         obj.save()
                         continue
-                    warehosue = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehosue)
+                    warehouse = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -2599,6 +2599,116 @@ class OriAllocationAdmin(object):
         return False
 
 
+# 递交原始盘盈单
+class OriSUAction(BaseActionView):
+    action_name = "submit_npsi_ori"
+    description = "提交选中的订单"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    modify_models_batch = False
+
+    @filter_hook
+    def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                for obj in queryset:
+                    self.log('change', '', obj)
+                    order_id = '{0}-{1}'.format(str(obj.order_id), str(obj.detail_num))
+                    if CovertSI.objects.filter(order_id=order_id).exists():
+                        self.message_user("单号%s递交重复，检查问题" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 1
+                        obj.save()
+                        continue
+                    order = CovertSI()
+                    order.order_id = order_id
+                    supplier = obj.owner
+                    order.payee = supplier
+                    order.purchaser = supplier
+                    _q_supplier = CompanyInfo.objects.filter(company_name=supplier)
+                    if _q_supplier.exists():
+                        order.supplier = _q_supplier[0]
+                    else:
+                        self.message_user("单号%s供货商非法，查看系统是否有此供货商" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 2
+                        obj.save()
+                        continue
+
+                    _q_department = DepartmentInfo.objects.filter(name='物流部')
+                    if _q_department.exists():
+                        order.department = _q_department[0]
+                    else:
+                        self.message_user("单号%s部门非法，查看系统是否有此部门" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 3
+                        obj.save()
+                        continue
+                    goods = obj.goods_id
+                    _q_goods = GoodsInfo.objects.filter(goods_id=goods)
+                    if _q_goods.exists():
+                        order.goods_name = _q_goods[0]
+                    else:
+                        self.message_user("单号%s货品非法，查看系统是否有货品" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 4
+                        obj.save()
+                        continue
+                    warehouse = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    if _q_warehouse.exists():
+                        order.warehouse = _q_warehouse[0]
+                    else:
+                        self.message_user("单号%s仓库错误，查看系统是否有此仓库" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 5
+                        obj.save()
+                        continue
+
+                    order.price = 0
+                    order.quantity_received = obj.quantity
+                    order.quantity_receivable = obj.quantity
+                    order.order_category = order.department.category
+                    order.origin_order_category = obj.order_category
+                    order.create_date = obj.date
+                    order.stockin_date = obj.date
+                    order.origin_order_id = obj.order_id
+
+                    fields_list = ['ori_creator', 'memorandum', 'goods_id', 'batch_num', 'produce_date', 'expiry_date']
+
+                    for k in fields_list:
+                        if hasattr(obj, k):
+                            setattr(order, k, getattr(obj, k))  # 更新对象属性对应键值
+
+                    if len(str(order.memorandum)) > 300:
+                        order.memorandum = order.memorandum[:300]
+                    try:
+                        order.creator = self.request.user.username
+                        order.save()
+                    except Exception as e:
+                        self.message_user("单号%s实例保存出错：%s" % (obj.order_id, e), "error")
+                        n -= 1
+                        obj.mistake_tag = 6
+                        obj.save()
+                        continue
+                    obj.order_status = 2
+                    obj.mistake_tag = 0
+                    obj.save()
+
+            self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
+        return None
+
+
 # #####未递交原始盘盈单#####
 class OriSUUnhandleAdmin(object):
     list_display = ['order_status', 'mistake_tag', 'detail_num', 'order_id', 'order_category', 'date', 'ori_creator', 'owner',
@@ -2609,7 +2719,7 @@ class OriSUUnhandleAdmin(object):
                    'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date', 'expiry_date']
 
     search_fields = ['order_id', ]
-    actions = []
+    actions = [OriSUAction, ]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -2805,6 +2915,104 @@ class OriSurplusAdmin(object):
         return False
 
 
+# 递交原始盘亏单
+class OriLOAction(BaseActionView):
+    action_name = "submit_loss_ori"
+    description = "提交选中的订单"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    modify_models_batch = False
+
+    @filter_hook
+    def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                for obj in queryset:
+                    self.log('change', '', obj)
+                    order_id = '{0}-{1}'.format(str(obj.order_id), str(obj.detail_num))
+                    if CovertSO.objects.filter(order_id=order_id).exists():
+                        self.message_user("单号%s递交重复，检查问题" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 1
+                        obj.save()
+                        continue
+                    order = CovertSO()
+                    order.order_id = order_id
+
+                    _q_department = DepartmentInfo.objects.filter(name='物流部')
+                    if _q_department.exists():
+                        order.department = _q_department[0]
+                    else:
+                        self.message_user("单号%s部门非法，查看系统是否有此部门" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 2
+                        obj.save()
+                        continue
+                    goods = obj.goods_id
+                    _q_goods = GoodsInfo.objects.filter(goods_id=goods)
+                    if _q_goods.exists():
+                        order.goods_name = _q_goods[0]
+                    else:
+                        self.message_user("单号%s货品非法，查看系统是否有货品" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 3
+                        obj.save()
+                        continue
+                    warehouse = obj.warehouse
+                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    if _q_warehouse.exists():
+                        order.warehouse = _q_warehouse[0]
+                    else:
+                        self.message_user("单号%s仓库错误，查看系统是否有此仓库" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 4
+                        obj.save()
+                        continue
+
+                    obj.customer = '盘点亏损'
+                    order.order_category = order.department.category
+                    order.origin_order_category = obj.order_category
+                    order.origin_order_id = obj.order_id
+                    order.price = 0
+                    order.amount = 0
+
+                    fields_list = ['ori_creator', 'memorandum', 'goods_id', 'batch_num', 'produce_date', 'expiry_date',
+                                   'date', 'quantity']
+
+                    for k in fields_list:
+                        if hasattr(obj, k):
+                            setattr(order, k, getattr(obj, k))  # 更新对象属性对应键值
+
+                    if len(str(order.memorandum)) > 300:
+                        order.memorandum = order.memorandum[:300]
+
+                    try:
+                        order.creator = self.request.user.username
+                        order.save()
+                    except Exception as e:
+                        self.message_user("单号%s实例保存出错：%s" % (obj.order_id, e), "error")
+                        n -= 1
+                        obj.mistake_tag = 5
+                        obj.save()
+                        continue
+                    obj.order_status = 2
+                    obj.mistake_tag = 0
+                    obj.save()
+
+            self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
+        return None
+
+
 # #####未递交原始盘亏单#####
 class OriLOUnhandleAdmin(object):
     list_display = ['order_status', 'mistake_tag', 'detail_num', 'order_id', 'order_category', 'date', 'ori_creator', 'owner',
@@ -2815,7 +3023,7 @@ class OriLOUnhandleAdmin(object):
                    'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date', 'expiry_date']
 
     search_fields = ['order_id', ]
-    actions = []
+    actions = [OriLOAction, ]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -2998,9 +3206,16 @@ class OriLOUnhandleAdmin(object):
         return False
 
 
-
 # 原始盘亏单
 class OirLossAdmin(object):
+    list_display = ['order_status', 'mistake_tag', 'detail_num', 'order_id', 'order_category', 'date', 'ori_creator', 'owner',
+                    'memorandum', 'goods_id', 'goods_name', 'goods_size', 'stock', 'check', 'quantity', 'warehouse',
+                    'batch_num', 'produce_date', 'expiry_date']
+
+    list_filter = ['mistake_tag', 'order_status', 'date', 'ori_creator', 'memorandum', 'goods_id', 'goods_name',
+                   'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date', 'expiry_date']
+
+    search_fields = ['order_id', ]
 
     def has_add_permission(self):
         # 禁用添加按钮
