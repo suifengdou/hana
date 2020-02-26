@@ -25,41 +25,41 @@ from xadmin.layout import Fieldset
 
 
 from .models import StockInfo, DeptStockInfo
-from apps.oms.predistribution.models import Undistribution
+# from apps.oms.predistribution.models import Undistribution
 from apps.base.relationship.models import DeptToW
-from apps.oms.allot.models import VAPending
+# from apps.oms.allot.models import VAPending
 
 
-class PredistributionInline(object):
-    model = Undistribution
+# class PredistributionInline(object):
+#     model = Undistribution
+#
+#     exclude = ['distribution_order_id', 'goods_name', 'vwarehouse', 'creator', 'order_status', 'error_tag', 'is_delete', 'goods_id']
+#     extra = 1
+#     style = 'table'
+#
+#     def queryset(self):
+#         queryset = super(PredistributionInline, self).queryset()
+#         queryset = queryset.filter(is_delete=0, order_status=1)
+#         return queryset
 
-    exclude = ['distribution_order_id', 'goods_name', 'vwarehouse', 'creator', 'order_status', 'error_tag', 'is_delete', 'goods_id']
-    extra = 1
-    style = 'table'
 
-    def queryset(self):
-        queryset = super(PredistributionInline, self).queryset()
-        queryset = queryset.filter(is_delete=0, order_status=1)
-        return queryset
-
-
-class VAPendingInline(object):
-    model = VAPending
-    exclude = ['allot_order_id', 'is_delete', 'creator', 'order_status', 'error_tag', 'is_delete', 'goods_id', 'goods_name', 'department']
-    extra = 1
-    style = 'table'
-
-    def queryset(self):
-        queryset = super(VAPendingInline, self).queryset()
-        queryset = queryset.filter(is_delete=0, order_status=1)
-        return queryset
+# class VAPendingInline(object):
+#     model = VAPending
+#     exclude = ['allot_order_id', 'is_delete', 'creator', 'order_status', 'error_tag', 'is_delete', 'goods_id', 'goods_name', 'department']
+#     extra = 1
+#     style = 'table'
+#
+#     def queryset(self):
+#         queryset = super(VAPendingInline, self).queryset()
+#         queryset = queryset.filter(is_delete=0, order_status=1)
+#         return queryset
 
 
 class StockInfoAdmin(object):
     list_display = ['goods_name', 'goods_id', 'warehouse', 'quantity', 'undistributed', 'memorandum', 'order_status']
     list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'order_status']
     readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'quantity', 'undistributed', 'order_status']
-    inlines = [PredistributionInline, ]
+    # inlines = [PredistributionInline, ]
     relfield_style = 'fk-ajax'
     form_layout = [
         Fieldset('存货信息',
@@ -102,7 +102,7 @@ class DeptStockInfoAdmin(object):
     list_display = ['goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
     list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name', 'order_status']
     readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status']
-    inlines = [VAPendingInline,]
+    # inlines = [VAPendingInline,]
     relfield_style = 'fk-ajax'
 
     form_layout = [

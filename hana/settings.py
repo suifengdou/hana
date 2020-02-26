@@ -53,11 +53,8 @@ INSTALLED_APPS = [
     'apps.base.warehouse.apps.WarehosueConfig',
     'apps.base.changelog.apps.ChangelogConfig',
     'apps.oms.purchase.apps.PurchaseConfig',
-    'apps.oms.predistribution.apps.PredistributionConfig',
-    'apps.oms.allot.apps.AllotConfig',
     'apps.oms.import_console.apps.ImportConsoleConfig',
     'apps.oms.convert_console.apps.ConvertConsoleConfig',
-    'apps.wms.stockin.apps.StockinConfig',
     'apps.wms.stock.apps.StockConfig',
 ]
 

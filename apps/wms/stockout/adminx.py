@@ -39,7 +39,7 @@ class StockOutAdmin(object):
     list_display = []
 
 
-xadmin.site.register(OriStockOutUnhandle, OriStockOutUnhandleAdmin)
-xadmin.site.register(OriStockOut, OriStockOutAdmin)
-xadmin.site.register(StockOutUnhandle, StockOutUnhandleAdmin)
-xadmin.site.register(StockOut, StockOutAdmin)
+# xadmin.site.register(OriStockOutUnhandle, OriStockOutUnhandleAdmin)
+# xadmin.site.register(OriStockOut, OriStockOutAdmin)
+# xadmin.site.register(StockOutUnhandle, StockOutUnhandleAdmin)
+# xadmin.site.register(StockOut, StockOutAdmin)

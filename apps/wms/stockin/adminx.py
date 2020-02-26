@@ -133,6 +133,6 @@ class StockInInfoAdmin(object):
     search_fields = []
 
 
-xadmin.site.register(StockInPending, StockInPendingAdmin)
-xadmin.site.register(StockInInfo, StockInInfoAdmin)
+# xadmin.site.register(StockInPending, StockInPendingAdmin)
+# xadmin.site.register(StockInInfo, StockInInfoAdmin)
 

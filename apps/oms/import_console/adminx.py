@@ -501,7 +501,7 @@ class OriStockInUnhandleAdmin(object):
                    'batch_number', 'warehouse', 'expiry_date', 'produce_date', 'purchase_order_id', 'multiple']
 
     search_fields = ['order_id']
-    actions = [OriSIAction]
+    actions = [OriSIAction, RejectSelectedAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -805,7 +805,7 @@ class OriStockOutUnhandleAdmin(object):
                    'goods_id', 'goods_name', 'quantity', 'warehouse', 'price', 'amount', 'package_size']
 
     search_fields = ['order_id',]
-    actions = [OriSOAction, ]
+    actions = [OriSOAction, RejectSelectedAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -1103,7 +1103,7 @@ class OriNSSOUnhandleAdmin(object):
                    'goods_id', 'goods_name', 'quantity', 'warehouse', 'out_category']
 
     search_fields = ['order_id', ]
-    actions = [OriNSSOAction, ]
+    actions = [OriNSSOAction, RejectSelectedAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -1416,7 +1416,7 @@ class OriNPSIUnhandleAdmin(object):
                    'goods_name', 'quantity', 'warehouse', 'batch_number', 'produce_date', 'expiry_date', 'in_category']
 
     search_fields = ['order_id', ]
-    actions = [OriNPSIAction, ]
+    actions = [OriNPSIAction, RejectSelectedAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -1729,7 +1729,7 @@ class OriRefundUnhandleAdmin(object):
                    'price', 'amount', 'refund_information']
 
     search_fields = ['order_id', ]
-    actions = [OriRefundAction, ]
+    actions = [OriRefundAction, RejectSelectedAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -2039,7 +2039,7 @@ class OriPRUnhandleAdmin(object):
                    'goods_memo', 'batch_num', 'quantity', 'warehouse', 'memorandum', 'price', 'amount']
 
     search_fields = ['order_id', ]
-    actions = [OriPRAction, ]
+    actions = [OriPRAction, RejectSelectedAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -2392,7 +2392,7 @@ class OriALUnhandleAdmin(object):
                    'warehouse_in', 'produce_date', 'expiry_date', 'stockin_date', 'customer']
 
     search_fields = ['order_id', ]
-    actions = [OriAllocationAction, ]
+    actions = [OriAllocationAction, RejectSelectedAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -2719,7 +2719,7 @@ class OriSUUnhandleAdmin(object):
                    'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date', 'expiry_date']
 
     search_fields = ['order_id', ]
-    actions = [OriSUAction, ]
+    actions = [OriSUAction, RejectSelectedAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -3023,7 +3023,7 @@ class OriLOUnhandleAdmin(object):
                    'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date', 'expiry_date']
 
     search_fields = ['order_id', ]
-    actions = [OriLOAction, ]
+    actions = [OriLOAction, RejectSelectedAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):

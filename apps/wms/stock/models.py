@@ -11,6 +11,7 @@ import django.utils.timezone as timezone
 from db.base_model import BaseModel
 from apps.base.goods.models import GoodsInfo
 from apps.base.warehouse.models import WarehouseGeneral, WarehouseVirtual
+from apps.base.department.models import DepartmentInfo
 
 
 class StockInfo(BaseModel):
@@ -45,6 +46,7 @@ class DeptStockInfo(BaseModel):
         (0, '库存锁定'),
         (1, '正常销售'),
     )
+    department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, verbose_name='部门名称')
     goods_name = models.ForeignKey(GoodsInfo, on_delete=models.CASCADE, verbose_name='货品名称')
     goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     warehouse = models.ForeignKey(WarehouseGeneral, on_delete=models.CASCADE, verbose_name='仓库')

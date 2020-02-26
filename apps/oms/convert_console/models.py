@@ -25,10 +25,10 @@ class CovertSI(BaseModel):
 
     MISTAKE_TAG = (
         (0, '正常'),
-        (1, '原始单缺漏'),
-        (2, '入库数量大于采购数量'),
-        (3, '保存库存错误'),
-        (4, '货品错误'),
+        (1, '未设置部门仓库'),
+        (2, '多线程重复操作'),
+        (3, '实仓实例保存错误'),
+        (4, '部门仓实例保存错误'),
         (5, '采购单错误'),
         (6, '采购单数量错误'),
     )
@@ -79,6 +79,9 @@ class CovertSIUnhandle(CovertSI):
         verbose_name = 'oms-入库调整单未审核'
         verbose_name_plural = verbose_name
         proxy = True
+
+    def __str__(self):
+        return str(self.order_id)
 
 
 class CovertSO(BaseModel):
@@ -136,3 +139,6 @@ class CovertSOUnhandle(CovertSO):
         verbose_name = 'oms-出库调整单未审核'
         verbose_name_plural = verbose_name
         proxy = True
+
+    def __str__(self):
+        return str(self.order_id)

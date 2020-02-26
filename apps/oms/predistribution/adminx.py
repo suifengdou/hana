@@ -141,5 +141,5 @@ class UndistributionAdmin(object):
 
 
 
-xadmin.site.register(Undistribution, UndistributionAdmin)
-xadmin.site.register(DistributionInfo, DistributionInfoAdmin)
+# xadmin.site.register(Undistribution, UndistributionAdmin)
+# xadmin.site.register(DistributionInfo, DistributionInfoAdmin)

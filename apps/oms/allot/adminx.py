@@ -262,7 +262,7 @@ class VirtualAllotAdmin(object):
         return False
 
 
-xadmin.site.register(VAPending, VAPendingAdmin)
-xadmin.site.register(VACheck, VACheckAdmin)
-xadmin.site.register(VAProcess, VAProcessAdmin)
-xadmin.site.register(VirtualAllot, VirtualAllotAdmin)
+# xadmin.site.register(VAPending, VAPendingAdmin)
+# xadmin.site.register(VACheck, VACheckAdmin)
+# xadmin.site.register(VAProcess, VAProcessAdmin)
+# xadmin.site.register(VirtualAllot, VirtualAllotAdmin)
