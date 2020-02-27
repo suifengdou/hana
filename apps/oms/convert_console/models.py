@@ -40,7 +40,7 @@ class CovertSI(BaseModel):
     supplier = models.ForeignKey(CompanyInfo, on_delete=models.CASCADE, verbose_name='供货方')
     department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, verbose_name='部门')
     create_date = models.DateTimeField(verbose_name='创建日期')
-    seller = models.CharField(max_length=60, verbose_name='结算方')
+    seller = models.CharField(max_length=60, null=True, blank=True, verbose_name='结算方')
 
     ori_creator = models.CharField(max_length=60, null=True, blank=True, verbose_name='创建人')
     payee = models.CharField(max_length=60, verbose_name='收款方')
@@ -104,7 +104,7 @@ class CovertSO(BaseModel):
         (1, '全局出库'),
     )
 
-    order_id = models.CharField(max_length=30, verbose_name='单据编号')
+    order_id = models.CharField(max_length=30, unique=True, verbose_name='单据编号')
     customer = models.CharField(max_length=60, verbose_name='客户')
     order_category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='单据类型')
     origin_order_category = models.CharField(max_length=20, verbose_name='源单类型')
@@ -151,7 +151,7 @@ class StockoutList(BaseModel):
         (0, '已取消'),
         (1, '已完成'),
     )
-    order_id = models.CharField(max_length=30, verbose_name='出库调整单单号', unnique=True, db_index=True)
+    order_id = models.CharField(max_length=30, verbose_name='出库调整单单号', unique=True, db_index=True)
     si_order_id = models.CharField(max_length=300, verbose_name='入库调整单单号', null=True, blank=True)
 
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')

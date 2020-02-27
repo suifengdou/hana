@@ -325,7 +325,7 @@ class OriLOAction(BaseActionView):
                     if _q_stock_virtual.exists():
                         stock_virtual = _q_stock_virtual[0]
                         stock_virtual.quantity = stock_virtual.quantity - obj.quantity
-                        if stock_virtual.quantity - obj.quantity < 0:
+                        if stock_virtual.quantity < 0:
                             self.message_user("单号%s部门存货不足" % obj.order_id, "error")
                             n -= 1
                             obj.mistake_tag = 2
@@ -337,7 +337,7 @@ class OriLOAction(BaseActionView):
                         try:
                             stocklist.save()
                         except Exception as e:
-                            self.message_user("单号%s保存历史记录失败" % obj.order_id, "error")
+                            self.message_user("单号%s保存历史记录失败，错误：%s" % (obj.order_id, e), "error")
                             n -= 1
                             obj.mistake_tag = 3
                             obj.save()
@@ -345,17 +345,21 @@ class OriLOAction(BaseActionView):
                         try:
                             stock_virtual.save()
                         except Exception as e:
-                            self.message_user("单号%s保存部门仓失败" % obj.order_id, "error")
+                            self.message_user("单号%s保存部门仓失败，错误：%s" % (obj.order_id, e), "error")
                             n -= 1
                             obj.mistake_tag = 4
                             obj.save()
                             continue
                         stock = StockInfo.objects.filter(warehouse=obj.warehouse, goods_name=obj.goods_name)[0]
-                        stock.quantity = stock.quantity - obj.quantity
+                        if obj.department.category == 1:
+                            stock.undistributed = stock.undistributed - obj.quantity
+                            stock.quantity = stock.quantity - obj.quantity
+                        else:
+                            stock.quantity = stock.quantity - obj.quantity
                         try:
                             stock.save()
                         except Exception as e:
-                            self.message_user("单号%s保存实仓失败" % obj.order_id, "error")
+                            self.message_user("单号%s保存实仓失败，错误：%s" % (obj.order_id, e), "error")
                             n -= 1
                             obj.mistake_tag = 5
                             obj.save()
@@ -375,13 +379,14 @@ class OriLOAction(BaseActionView):
                             else:
                                 c_si.quantity_linking = c_si.quantity_linking - minuend
                                 stocklist.si_order_id = '{0}+{1}'.format(str(stocklist.si_order_id), str(c_si.order_id))
+                                stocklist.si_order_id = stocklist.si_order_id[:300]
                                 stocklist.save()
                                 c_si.save()
                                 break
                     else:
                         self.message_user("单号%s部门没有此货品" % obj.order_id, "error")
                         n -= 1
-                        obj.mistake_tag = 1
+                        obj.mistake_tag = 7
                         obj.save()
                         continue
 
@@ -403,7 +408,7 @@ class CovertSOUnhandleAdmin(object):
 
     list_filter = ['mistake_tag', 'order_status', 'order_category', 'department__name', 'goods_name__goods_name',
                    'warehouse__warehouse_name', 'goods_id', 'sale_organization',  'date']
-
+    actions = [OriLOAction, ]
     search_fields = ['order_id', 'origin_order_id']
 
     def queryset(self):
@@ -432,9 +437,17 @@ class CovertSOAdmin(object):
         return False
 
 
+class StockoutListAdmin(object):
+    list_display = ['order_id', 'order_status', 'si_order_id', ]
+    list_filter = ['order_id', 'order_status']
+    search_fields = ['order_id']
+    readonly_fields = ['order_id', 'order_status', 'si_order_id',]
+
+
 xadmin.site.register(CovertSIUnhandle, CovertSIUnhandleAdmin)
 xadmin.site.register(CovertSI, CovertSIAdmin)
 xadmin.site.register(CovertSOUnhandle, CovertSOUnhandleAdmin)
 xadmin.site.register(CovertSO, CovertSOAdmin)
+xadmin.site.register(StockoutList, StockoutListAdmin)
 
 

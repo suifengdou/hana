@@ -597,7 +597,7 @@ class OriSurplus(BaseModel):
         (6, '实例保存错误'),
     )
 
-    detail_num  = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
+    detail_num = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
     order_id = models.CharField(max_length=60, verbose_name='单据编号', db_index=True)
     order_category = models.CharField(max_length=60, verbose_name='单据类型')
     date = models.DateTimeField(max_length=60, verbose_name='日期')
