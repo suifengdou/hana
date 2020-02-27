@@ -29,8 +29,7 @@ class CovertSI(BaseModel):
         (2, '多线程重复操作'),
         (3, '实仓实例保存错误'),
         (4, '部门仓实例保存错误'),
-        (5, '采购单错误'),
-        (6, '采购单数量错误'),
+
     )
     CATEGORY = (
         (0, '独立入库'),
@@ -92,10 +91,13 @@ class CovertSO(BaseModel):
     )
     ERROR_LIST = (
         (0, '正常'),
-        (1, '重复递交'),
-        (2, '仓库非法'),
-        (3, '部门非法'),
-        (4, '货品非法'),
+        (1, '多线程重复操作'),
+        (2, '部门存货不足'),
+        (3, '保存历史记录失败'),
+        (4, '保存部门仓失败'),
+        (5, '保存实仓失败'),
+        (6, '保存部门仓失败'),
+        (7, '部门没有此货品'),
     )
     CATEGORY = (
         (0, '独立出库'),
@@ -142,3 +144,19 @@ class CovertSOUnhandle(CovertSO):
 
     def __str__(self):
         return str(self.order_id)
+
+
+class StockoutList(BaseModel):
+    ORDER_STATUS = (
+        (0, '已取消'),
+        (1, '已完成'),
+    )
+    order_id = models.CharField(max_length=30, verbose_name='出库调整单单号', unnique=True, db_index=True)
+    si_order_id = models.CharField(max_length=300, verbose_name='入库调整单单号', null=True, blank=True)
+
+    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
+
+    class Meta:
+        verbose_name = 'oms-出库调整单已出库列表'
+        verbose_name_plural = verbose_name
+        db_table = 'oms_convert_solist'

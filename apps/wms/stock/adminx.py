@@ -57,7 +57,7 @@ from apps.base.relationship.models import DeptToW
 
 class StockInfoAdmin(object):
     list_display = ['goods_name', 'goods_id', 'warehouse', 'quantity', 'undistributed', 'memorandum', 'order_status']
-    list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'order_status']
+    list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'quantity', 'order_status']
     readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'quantity', 'undistributed', 'order_status']
     # inlines = [PredistributionInline, ]
     relfield_style = 'fk-ajax'
@@ -99,7 +99,7 @@ class StockInfoAdmin(object):
 
 
 class DeptStockInfoAdmin(object):
-    list_display = ['goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
+    list_display = ['department', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
     list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name', 'order_status']
     readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status']
     # inlines = [VAPendingInline,]

@@ -22,7 +22,7 @@ from xadmin.views.base import filter_hook
 from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 
-from .models import CovertSI, CovertSIUnhandle, CovertSO, CovertSOUnhandle
+from .models import CovertSI, CovertSIUnhandle, CovertSO, CovertSOUnhandle, StockoutList
 from apps.base.warehouse.models import WarehouseVirtual, WarehouseInfo
 from apps.base.relationship.models import DeptToVW
 from apps.wms.stock.models import StockInfo, DeptStockInfo
@@ -112,7 +112,7 @@ class RejectSelectedAction(BaseActionView):
                                 self.get_template_list('views/model_reject_selected_confirm.html'), context)
 
 
-# 递交原始采购入库单
+# 递交入库调整单
 class CovertSIAction(BaseActionView):
     action_name = "submit_covert_si"
     description = "提交选中的订单"
@@ -170,7 +170,11 @@ class CovertSIAction(BaseActionView):
                                 obj.mistake_tag = 3
                                 obj.save()
                                 continue
-                            _q_stock_virtual = DeptStockInfo.objects.filter(goods_name=obj.goods_name, warehouse=obj.warehouse, vwarehouse=vwarehouse)
+                            _q_stock_virtual = DeptStockInfo.objects.filter(department=obj.department,
+                                                                            goods_name=obj.goods_name,
+                                                                            warehouse=obj.warehouse,
+                                                                            vwarehouse=vwarehouse)
+
                             if _q_stock_virtual.exists():
                                 stock_virtual = _q_stock_virtual[0]
                                 stock_virtual.quantity = stock_virtual.quantity + obj.quantity_received
@@ -187,6 +191,7 @@ class CovertSIAction(BaseActionView):
                                 stock_virtual.goods_name = obj.goods_name
                                 stock_virtual.goods_id = obj.goods_id
                                 stock_virtual.warehouse = obj.warehouse
+                                stock_virtual.department = obj.department
                                 stock_virtual.vwarehouse = vwarehouse
                                 stock_virtual.quantity = obj.quantity_received
 
@@ -218,10 +223,10 @@ class CovertSIAction(BaseActionView):
                         else:
                             stock.undistributed = 0
 
+                        stock_virtual.department = obj.department
                         stock_virtual.vwarehouse = vwarehouse
                         stock_virtual.quantity = obj.quantity_received
                         try:
-
                             stock.creator = self.request.user.username
                             stock.save()
                         except Exception as e:
@@ -251,29 +256,146 @@ class CovertSIAction(BaseActionView):
         return None
 
 
+# #####未审核入库调整单#####
 class CovertSIUnhandleAdmin(object):
     list_display = ['order_id', 'mistake_tag', 'order_status', 'order_category', 'origin_order_category', 'supplier',
                     'department', 'goods_id','goods_name', 'quantity_receivable', 'quantity_received', 'payee',
                     'warehouse', 'origin_order_id',  'ori_creator',  'stockin_date', 'purchaser',
-                    'batch_number',  'expiry_date', 'produce_date', 'memorandum',
-                    'price', 'quantity_linking']
+                    'batch_number',  'expiry_date', 'produce_date', 'memorandum', 'price', 'quantity_linking']
     list_filter = ['order_category', 'department__name', 'create_date', 'supplier__company_name', 'stockin_date',
-                   'goods_name__goods_name', 'warehouse__warehouse_name']
+                   'goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name']
     search_fields = ['order_id']
     actions = [CovertSIAction, ]
 
+    def queryset(self):
+        queryset = super(CovertSIUnhandleAdmin, self).queryset()
+        queryset = queryset.filter(is_delete=0, order_status=1)
+        return queryset
 
+    def has_add_permission(self):
+        # 禁用添加按钮
+        return False
+
+
+# 入库调整单
 class CovertSIAdmin(object):
     list_display = ['order_id', 'mistake_tag', 'order_status', 'order_category', 'origin_order_category', 'supplier',
                     'department', 'goods_id','goods_name', 'quantity_receivable', 'quantity_received', 'payee',
                     'warehouse', 'origin_order_id',  'ori_creator',  'stockin_date', 'purchaser',
-                    'batch_number',  'expiry_date', 'produce_date', 'memorandum',
-                    'price', 'quantity_linking']
+                    'batch_number',  'expiry_date', 'produce_date', 'memorandum', 'price', 'quantity_linking']
     list_filter = ['order_category', 'department__name', 'create_date', 'supplier__company_name', 'stockin_date',
-                   'goods_name__goods_name', 'warehouse__warehouse_name']
+                   'goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name']
     search_fields = ['order_id']
 
+    def has_add_permission(self):
+        # 禁用添加按钮
+        return False
 
+
+# 递交出库调整单
+class OriLOAction(BaseActionView):
+    action_name = "submit_loss_ori"
+    description = "提交选中的订单"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    modify_models_batch = False
+
+    @filter_hook
+    def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                for obj in queryset:
+                    self.log('change', '', obj)
+                    _q_repeat_so = StockoutList.objects.filter(order_id=obj.order_id)
+                    if _q_repeat_so.exists():
+                        self.message_user("单号%s不要重复点递交，多线程递交会造成程序错乱" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 1
+                        obj.save()
+                        continue
+                    _q_stock_virtual = DeptStockInfo.objects.filter(department=obj.department, warehouse=obj.warehouse, goods_name=obj.goods_name)
+                    if _q_stock_virtual.exists():
+                        stock_virtual = _q_stock_virtual[0]
+                        stock_virtual.quantity = stock_virtual.quantity - obj.quantity
+                        if stock_virtual.quantity - obj.quantity < 0:
+                            self.message_user("单号%s部门存货不足" % obj.order_id, "error")
+                            n -= 1
+                            obj.mistake_tag = 2
+                            obj.save()
+                            continue
+                        stocklist = StockoutList()
+                        stocklist.order_id = obj.order_id
+                        stocklist.creator = self.request.user.username
+                        try:
+                            stocklist.save()
+                        except Exception as e:
+                            self.message_user("单号%s保存历史记录失败" % obj.order_id, "error")
+                            n -= 1
+                            obj.mistake_tag = 3
+                            obj.save()
+                            continue
+                        try:
+                            stock_virtual.save()
+                        except Exception as e:
+                            self.message_user("单号%s保存部门仓失败" % obj.order_id, "error")
+                            n -= 1
+                            obj.mistake_tag = 4
+                            obj.save()
+                            continue
+                        stock = StockInfo.objects.filter(warehouse=obj.warehouse, goods_name=obj.goods_name)[0]
+                        stock.quantity = stock.quantity - obj.quantity
+                        try:
+                            stock.save()
+                        except Exception as e:
+                            self.message_user("单号%s保存实仓失败" % obj.order_id, "error")
+                            n -= 1
+                            obj.mistake_tag = 5
+                            obj.save()
+                            continue
+                        convert_si = CovertSIUnhandle.objects.filter(department=obj.department,
+                                                                     goods_name=obj.goods_name,
+                                                                     warehouse=obj.warehouse).order_by('stockin_date')
+
+                        minuend = obj.quantity
+                        for c_si in convert_si:
+                            if minuend > c_si.quantity_linking:
+                                minuend = minuend - c_si.quantity_linking
+                                c_si.quantity_linking = 0
+                                stocklist.si_order_id = str(c_si.order_id)
+                                stocklist.save()
+                                c_si.save()
+                            else:
+                                c_si.quantity_linking = c_si.quantity_linking - minuend
+                                stocklist.si_order_id = '{0}+{1}'.format(str(stocklist.si_order_id), str(c_si.order_id))
+                                stocklist.save()
+                                c_si.save()
+                                break
+                    else:
+                        self.message_user("单号%s部门没有此货品" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 1
+                        obj.save()
+                        continue
+
+                    obj.order_status = 2
+                    obj.mistake_tag = 0
+                    obj.save()
+
+            self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
+        return None
+
+
+# #####未审核出库调整单#####
 class CovertSOUnhandleAdmin(object):
     list_display = ['order_id', 'mistake_tag', 'order_status', 'customer', 'order_category', 'origin_order_category', 'origin_order_id',
                     'sale_organization', 'department', 'memorandum', 'ori_creator', 'date', 'goods_id', 'goods_name',
@@ -284,7 +406,17 @@ class CovertSOUnhandleAdmin(object):
 
     search_fields = ['order_id', 'origin_order_id']
 
+    def queryset(self):
+        queryset = super(CovertSOUnhandleAdmin, self).queryset()
+        queryset = queryset.filter(is_delete=0, order_status=1)
+        return queryset
 
+    def has_add_permission(self):
+        # 禁用添加按钮
+        return False
+
+
+# 出库调整单
 class CovertSOAdmin(object):
     list_display = ['order_id', 'customer', 'order_category', 'origin_order_category', 'origin_order_id',
                     'sale_organization', 'department', 'memorandum', 'ori_creator', 'date', 'goods_id', 'goods_name',
@@ -295,6 +427,10 @@ class CovertSOAdmin(object):
 
     search_fields = ['order_id', 'origin_order_id']
 
+    def has_add_permission(self):
+        # 禁用添加按钮
+        return False
+
 
 xadmin.site.register(CovertSIUnhandle, CovertSIUnhandleAdmin)
 xadmin.site.register(CovertSI, CovertSIAdmin)
@@ -302,10 +438,3 @@ xadmin.site.register(CovertSOUnhandle, CovertSOUnhandleAdmin)
 xadmin.site.register(CovertSO, CovertSOAdmin)
 
 
-
-
-
-
-
-
-ACTION_CHECKBOX_NAME = '_selected_action'
