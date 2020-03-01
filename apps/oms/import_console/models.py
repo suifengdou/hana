@@ -136,6 +136,7 @@ class OriStockInInfo(BaseModel):
     class Meta:
         verbose_name = 'wms-原始采购入库单'
         verbose_name_plural = verbose_name
+        unique_together = ('detail_num', 'order_id')
         db_table = 'oms_ic_oristockin'
 
     def __str__(self):
@@ -353,7 +354,7 @@ class OriNPStockIn(BaseModel):
 
 class OriNPSIUnhandle(OriNPStockIn):
     VERIFY_FIELD = ['detail_num', 'order_id', 'order_category', 'date', 'department', 'ori_creator', 'owner', 'memorandum',
-                    'goods_id', 'goods_name', 'goods_size', 'quantity', 'warehouse', 'batch_number', 'produce_time',
+                    'goods_id', 'goods_name', 'goods_size', 'quantity', 'warehouse', 'batch_number', 'produce_date',
                     'expiry_date', 'in_category']
 
     class Meta:
@@ -525,6 +526,12 @@ class OriAllocation(BaseModel):
         (4, '货品非法'),
         (5, '仓库非法'),
         (6, '实例保存错误'),
+        (7, '入库保存错误'),
+        (8, '出库保存错误'),
+    )
+    OPTIONS = (
+        (0, '否'),
+        (1, '是'),
     )
 
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号', db_index=True)
@@ -548,6 +555,8 @@ class OriAllocation(BaseModel):
     stockin_date = models.DateTimeField(max_length=60, verbose_name='入库日期')
     customer = models.CharField(max_length=50, verbose_name='客户')
 
+    si_tag = models.SmallIntegerField(choices=OPTIONS, default=0, verbose_name='入库创建')
+    so_tag = models.SmallIntegerField(choices=OPTIONS, default=0, verbose_name='出库创建')
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
     mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='问题原因')
 

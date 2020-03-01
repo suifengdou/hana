@@ -55,7 +55,9 @@ INSTALLED_APPS = [
     'apps.oms.purchase.apps.PurchaseConfig',
     'apps.oms.import_console.apps.ImportConsoleConfig',
     'apps.oms.convert_console.apps.ConvertConsoleConfig',
+    'apps.oms.allot.apps.AllotConfig',
     'apps.wms.stock.apps.StockConfig',
+
 ]
 
 AUTH_USER_MODEL = "users.UserProfile"
@@ -130,7 +132,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
 LANGUAGE_CODE = 'zh-hans'
-# LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Asia/Shanghai'
 
@@ -138,7 +139,6 @@ USE_I18N = True
 
 USE_L10N = True
 
-# 设置是否启用时区
 USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)

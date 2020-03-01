@@ -23,7 +23,7 @@ from .models import OriStockInUnhandle, OriStockInInfo, OriStockOutUnhandle, Ori
 from .models import OriNSSOUnhandle, OriNSStockout, OriNPSIUnhandle, OriNPStockIn, OriRefundUnhandle, OriRefund
 from .models import OriPRUnhandle, OriPurRefund, OriALUnhandle, OriAllocation, OriSUUnhandle, OriSurplus, OriLOUnhandle, OirLoss
 
-from apps.oms.convert_console.models import CovertSI, CovertSO
+from apps.oms.convert_console.models import CovertSI, CovertSO, CovertLoss
 from apps.base.warehouse.models import WarehouseGeneral
 from apps.base.goods.models import GoodsInfo
 from apps.oms.purchase.models import PurchaseInfo
@@ -115,6 +115,81 @@ class RejectSelectedAction(BaseActionView):
                                 self.get_template_list('views/model_reject_selected_confirm.html'), context)
 
 
+class SetPassAction(BaseActionView):
+
+        action_name = "set_pass_selected"
+        description = '选中的单据设置成功'
+
+        delete_confirmation_template = None
+        delete_selected_confirmation_template = None
+
+        modify_models_batch = True
+
+        model_perm = 'change'
+        icon = 'fa fa-times'
+
+        @filter_hook
+        def set_pass_models(self, queryset):
+            n = queryset.count()
+            if n:
+                if self.modify_models_batch:
+                    self.log('change',
+                             '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                    queryset.update(order_status=2, mistake_tag=0)
+                self.message_user("成功设置 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                                  'success')
+            return None
+
+        @filter_hook
+        def do_action(self, queryset):
+            # Check that the user has delete permission for the actual model
+            if not self.has_change_permission():
+                raise PermissionDenied
+
+            using = router.db_for_write(self.model)
+
+            # Populate deletable_objects, a data structure of all related objects that
+            # will also be deleted.
+            deletable_objects, model_count, perms_needed, protected = get_deleted_objects(
+                queryset, self.opts, self.user, self.admin_site, using)
+
+            # The user has already confirmed the deletion.
+            # Do the deletion and return a None to display the change list view again.
+            if self.request.POST.get('post'):
+                if not self.has_change_permission():
+                    raise PermissionDenied
+                self.set_pass_models(queryset)
+                # Return None to display the change list page again.
+                return None
+
+            if len(queryset) == 1:
+                objects_name = force_text(self.opts.verbose_name)
+            else:
+                objects_name = force_text(self.opts.verbose_name_plural)
+            perms_needed = []
+            if perms_needed or protected:
+                title = "Cannot set %(name)s" % {"name": objects_name}
+            else:
+                title = "Are you sure?"
+
+            context = self.get_context()
+            context.update({
+                "title": title,
+                "objects_name": objects_name,
+                "deletable_objects": [deletable_objects],
+                'queryset': queryset,
+                "perms_lacking": perms_needed,
+                "protected": protected,
+                "opts": self.opts,
+                "app_label": self.app_label,
+                'action_checkbox_name': ACTION_CHECKBOX_NAME,
+            })
+
+            # Display the confirmation page
+            return TemplateResponse(self.request, self.delete_selected_confirmation_template or
+                                    self.get_template_list('views/model_set_pass_selected_confirm.html'), context)
+
+
 # 递交原始采购单
 class PurSMAction(BaseActionView):
     action_name = "submit_pur_ori"
@@ -202,7 +277,7 @@ class OriPurchaseUnhandleAdmin(object):
     list_filter = ['mistake_tag', 'order_status', 'purchase_time', 'mistake_tag', 'supplier', 'puchaser', 'quantity',
                    'delivery_date', 'goods_name']
     search_fields = ['order_id', 'goods_name', 'goods_id']
-    actions = [PurSMAction, RejectSelectedAction]
+    actions = [PurSMAction, RejectSelectedAction, SetPassAction]
     import_data = True
 
     def post(self, request, *args, **kwargs):
@@ -491,6 +566,7 @@ class OriSIAction(BaseActionView):
 
 # #####未递交原始采购入库单#####
 class OriStockInUnhandleAdmin(object):
+
     list_display = ['detail_num', 'order_id', 'mistake_tag',  'department', 'supplier', 'stockin_date', 'goods_id',
                     'goods_name', 'goods_size', 'quantity_received', 'price', 'batch_number', 'warehouse',
                     'storage', 'expiry_date', 'produce_date', 'purchase_order_id', 'multiple', 'ori_creator']
@@ -516,7 +592,7 @@ class OriStockInUnhandleAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(OriStockInUnhandleAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
@@ -820,7 +896,7 @@ class OriStockOutUnhandleAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(OriStockOutUnhandleAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
@@ -1118,7 +1194,7 @@ class OriNSSOUnhandleAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(OriNSSOUnhandleAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
@@ -1431,7 +1507,7 @@ class OriNPSIUnhandleAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(OriNPSIUnhandleAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
@@ -1744,7 +1820,7 @@ class OriRefundUnhandleAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(OriRefundUnhandleAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
@@ -2054,7 +2130,7 @@ class OriPRUnhandleAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(OriPRUnhandleAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
@@ -2252,29 +2328,10 @@ class OriAllocationAction(BaseActionView):
                     self.log('change', '', obj)
                     si_order_id = '{0}-{1}-I'.format(str(obj.order_id), str(obj.detail_num))
                     so_order_id = '{0}-{1}-O'.format(str(obj.order_id), str(obj.detail_num))
-                    if CovertSI.objects.filter(order_id=si_order_id).exists():
-                        self.message_user("单号%s递交重复，检查问题" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 1
-                        obj.save()
-                        continue
-                    elif CovertSO.objects.filter(order_id=so_order_id).exists():
-                        self.message_user("单号%s递交重复，检查问题" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 1
-                        obj.save()
-                        continue
-                    so_order = CovertSO()
-                    si_order = CovertSI()
-                    so_order.order_id = so_order_id
-                    si_order.order_id = si_order_id
                     supplier = obj.trans_out
-                    si_order.payee = supplier
-                    si_order.purchaser = supplier
                     _q_supplier = CompanyInfo.objects.filter(company_name=supplier)
                     if _q_supplier.exists():
-                        si_order.supplier = _q_supplier[0]
-                        so_order.customer = _q_supplier[0].company_name
+                        obj_supplier = _q_supplier[0]
                     else:
                         self.message_user("单号%s供货商非法，查看系统是否有此供货商" % obj.order_id, "error")
                         n -= 1
@@ -2283,20 +2340,18 @@ class OriAllocationAction(BaseActionView):
                         continue
                     department = obj.department
                     _q_department = DepartmentInfo.objects.filter(name=department)
-                    so_order.department = DepartmentInfo.objects.filter(name='物流部')[0]
                     if _q_department.exists():
-                        si_order.department = _q_department[0]
+                        si_department = _q_department[0]
                     else:
                         self.message_user("单号%s部门非法，查看系统是否有此部门" % obj.order_id, "error")
                         n -= 1
                         obj.mistake_tag = 3
                         obj.save()
                         continue
-                    goods = obj.goods_id
-                    _q_goods = GoodsInfo.objects.filter(goods_id=goods)
+
+                    _q_goods = GoodsInfo.objects.filter(goods_id=obj.goods_id)
                     if _q_goods.exists():
-                        si_order.goods_name = _q_goods[0]
-                        so_order.goods_name = _q_goods[0]
+                        goods_name = _q_goods[0]
                     else:
                         self.message_user("单号%s货品非法，查看系统是否有货品" % obj.order_id, "error")
                         n -= 1
@@ -2304,75 +2359,119 @@ class OriAllocationAction(BaseActionView):
                         obj.save()
                         continue
 
-                    si_warehouse = obj.warehouse_in
-                    _q_si_warehouse = WarehouseGeneral.objects.filter(warehouse_name=si_warehouse)
-                    if _q_si_warehouse.exists():
-                        si_order.warehouse = _q_si_warehouse[0]
-                    else:
-                        self.message_user("单号%s入库仓库错误，查看系统是否有此仓库" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 5
+                    if CovertSI.objects.filter(order_id=si_order_id).exists():
+                        self.message_user("单号%s已经生成入库，此次未生成入库" % obj.order_id, "error")
+                        obj.si_tag = 1
                         obj.save()
-                        continue
-
-                    so_warehouse = obj.warehouse_out
-                    _q_so_warehouse = WarehouseGeneral.objects.filter(warehouse_name=so_warehouse)
-                    if _q_so_warehouse.exists():
-                        so_order.warehouse = _q_so_warehouse[0]
                     else:
-                        self.message_user("单号%s出库仓库错误，查看系统是否有此仓库" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 5
+                        si_order = CovertSI()
+                        si_order.order_id = si_order_id
+                        si_order.payee = supplier
+                        si_order.purchaser = supplier
+                        si_order.supplier = obj_supplier
+                        si_order.department = si_department
+                        si_order.goods_name = goods_name
+
+                        si_warehouse = obj.warehouse_in
+                        _q_si_warehouse = WarehouseGeneral.objects.filter(warehouse_name=si_warehouse)
+                        if _q_si_warehouse.exists():
+                            si_order.warehouse = _q_si_warehouse[0]
+                        else:
+                            self.message_user("单号%s入库仓库错误，查看系统是否有此仓库" % obj.order_id, "error")
+                            n -= 1
+                            obj.mistake_tag = 5
+                            obj.save()
+                            continue
+
+                        si_order.price = 0
+                        si_order.quantity_received = obj.quantity
+                        si_order.quantity_receivable = obj.quantity
+                        si_order.order_category = si_order.department.category
+                        si_order.origin_order_category = obj.order_category
+                        si_order.create_date = obj.date
+                        si_order.origin_order_id = obj.order_id
+                        si_order.stockin_date = obj.stockin_date
+
+                        fields_list = ['ori_creator', 'goods_id', 'batch_number', 'expiry_date', 'produce_date',
+                                       'memorandum']
+
+                        for k in fields_list:
+                            if hasattr(obj, k):
+                                setattr(si_order, k, getattr(obj, k))  # 更新对象属性对应键值
+
+                        if len(str(si_order.memorandum)) > 300:
+                            si_order.memorandum = si_order.memorandum[:300]
+
+                        try:
+                            si_order.creator = self.request.user.username
+                            si_order.save()
+                            obj.si_tag = 1
+                            obj.save()
+                        except Exception as e:
+                            self.message_user("单号%s入库创建错误：%s" % (obj.order_id, e), "error")
+                            n -= 1
+                            obj.mistake_tag = 7
+                            obj.save()
+                            continue
+
+                    if CovertSO.objects.filter(order_id=so_order_id).exists():
+                        self.message_user("单号%s递交重复，检查问题" % obj.order_id, "error")
+                        obj.mistake_tag = 1
+                        obj.so_tag = 1
                         obj.save()
-                        continue
+                    else:
+                        so_order = CovertSO()
+                        so_order.order_id = so_order_id
+                        so_order.customer = obj_supplier.company_name
+                        so_order.department = DepartmentInfo.objects.filter(name='物流部')[0]
+                        so_order.goods_name = goods_name
 
-                    so_order.price = 0
-                    so_order.amount = 0
-                    so_order.quantity = obj.quantity
-                    so_order.order_category = so_order.department.category
-                    so_order.origin_order_category = obj.order_category
-                    so_order.create_date = obj.date
-                    so_order.origin_order_id = obj.order_id
-                    so_order.date = obj.date
+                        so_warehouse = obj.warehouse_out
+                        _q_so_warehouse = WarehouseGeneral.objects.filter(warehouse_name=so_warehouse)
+                        if _q_so_warehouse.exists():
+                            so_order.warehouse = _q_so_warehouse[0]
+                        else:
+                            self.message_user("单号%s出库仓库错误，查看系统是否有此仓库" % obj.order_id, "error")
+                            n -= 1
+                            obj.mistake_tag = 5
+                            obj.save()
+                            continue
+                        so_order.price = 0
+                        so_order.amount = 0
+                        so_order.quantity = obj.quantity
+                        so_order.order_category = so_order.department.category
+                        so_order.origin_order_category = obj.order_category
+                        so_order.create_date = obj.date
+                        so_order.origin_order_id = obj.order_id
+                        so_order.date = obj.date
 
-                    si_order.price = 0
-                    si_order.quantity_received = obj.quantity
-                    si_order.quantity_receivable = obj.quantity
-                    si_order.order_category = si_order.department.category
-                    si_order.origin_order_category = obj.order_category
-                    si_order.create_date = obj.date
-                    si_order.origin_order_id = obj.order_id
-                    si_order.stockin_date = obj.stockin_date
+                        fields_list = ['ori_creator', 'goods_id', 'batch_number', 'expiry_date', 'produce_date',
+                                       'memorandum']
 
-                    fields_list = ['ori_creator', 'goods_id', 'batch_number', 'expiry_date', 'produce_date', 'memorandum']
+                        for k in fields_list:
+                            if hasattr(obj, k):
+                                setattr(so_order, k, getattr(obj, k))  # 更新对象属性对应键值
 
-                    for k in fields_list:
-                        if hasattr(obj, k):
-                            setattr(so_order, k, getattr(obj, k))  # 更新对象属性对应键值
-
-                    for k in fields_list:
-                        if hasattr(obj, k):
-                            setattr(si_order, k, getattr(obj, k))  # 更新对象属性对应键值
-
-                    if len(str(so_order.memorandum)) > 300:
-                        so_order.memorandum = so_order.memorandum[:300]
-                    if len(str(si_order.memorandum)) > 300:
-                        si_order.memorandum = si_order.memorandum[:300]
-
-                    try:
-                        so_order.creator = self.request.user.username
-                        si_order.creator = self.request.user.username
-                        so_order.save()
-                        si_order.save()
-                    except Exception as e:
-                        self.message_user("单号%s实例保存出错：%s" % (obj.order_id, e), "error")
-                        n -= 1
+                        if len(str(so_order.memorandum)) > 300:
+                            so_order.memorandum = so_order.memorandum[:300]
+                        try:
+                            so_order.creator = self.request.user.username
+                            so_order.save()
+                            obj.so_tag = 1
+                            obj.save()
+                        except Exception as e:
+                            self.message_user("单号%s实例保存出错：%s" % (obj.order_id, e), "error")
+                            n -= 1
+                            obj.mistake_tag = 8
+                            obj.save()
+                            continue
+                    if obj.si_tag and obj.so_tag:
+                        obj.order_status = 2
+                        obj.mistake_tag = 0
+                        obj.save()
+                    else:
                         obj.mistake_tag = 6
                         obj.save()
-                        continue
-                    obj.order_status = 2
-                    obj.mistake_tag = 0
-                    obj.save()
 
             self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
                               'success')
@@ -2407,7 +2506,7 @@ class OriALUnhandleAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(OriALUnhandleAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
@@ -2734,7 +2833,7 @@ class OriSUUnhandleAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(OriSUUnhandleAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
@@ -2938,24 +3037,16 @@ class OriLOAction(BaseActionView):
                 for obj in queryset:
                     self.log('change', '', obj)
                     order_id = '{0}-{1}'.format(str(obj.order_id), str(obj.detail_num))
-                    if CovertSO.objects.filter(order_id=order_id).exists():
+                    if CovertLoss.objects.filter(order_id=order_id).exists():
                         self.message_user("单号%s递交重复，检查问题" % obj.order_id, "error")
                         n -= 1
                         obj.mistake_tag = 1
                         obj.save()
                         continue
-                    order = CovertSO()
+                    order = CovertLoss()
                     order.order_id = order_id
 
-                    _q_department = DepartmentInfo.objects.filter(name='物流部')
-                    if _q_department.exists():
-                        order.department = _q_department[0]
-                    else:
-                        self.message_user("单号%s部门非法，查看系统是否有此部门" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 2
-                        obj.save()
-                        continue
+                    order.department = '仓储部'
                     goods = obj.goods_id
                     _q_goods = GoodsInfo.objects.filter(goods_id=goods)
                     if _q_goods.exists():
@@ -2978,14 +3069,10 @@ class OriLOAction(BaseActionView):
                         continue
 
                     obj.customer = '盘点亏损'
-                    order.order_category = order.department.category
                     order.origin_order_category = obj.order_category
                     order.origin_order_id = obj.order_id
-                    order.price = 0
-                    order.amount = 0
 
-                    fields_list = ['ori_creator', 'memorandum', 'goods_id', 'batch_num', 'produce_date', 'expiry_date',
-                                   'date', 'quantity']
+                    fields_list = ['ori_creator', 'memorandum', 'goods_id', 'date', 'quantity']
 
                     for k in fields_list:
                         if hasattr(obj, k):
@@ -3038,7 +3125,7 @@ class OriLOUnhandleAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(OriLOUnhandleAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):

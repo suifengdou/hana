@@ -22,7 +22,7 @@ from xadmin.views.base import filter_hook
 from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 
-from .models import CovertSI, CovertSIUnhandle, CovertSO, CovertSOUnhandle, StockoutList
+from .models import CovertSI, CovertSIUnhandle, CovertSO, CovertSOUnhandle, StockoutList, CovertLOUnhandle, CovertLoss
 from apps.base.warehouse.models import WarehouseVirtual, WarehouseInfo
 from apps.base.relationship.models import DeptToVW
 from apps.wms.stock.models import StockInfo, DeptStockInfo
@@ -444,10 +444,24 @@ class StockoutListAdmin(object):
     readonly_fields = ['order_id', 'order_status', 'si_order_id',]
 
 
+class CovertLOUnhandleAdmin(object):
+    list_display = ['order_id', 'order_status', 'mistake_tag', 'customer', 'origin_order_category', 'origin_order_id',
+                    'department', 'des_department', 'ori_creator', 'date', 'goods_id',
+                    'goods_name', 'quantity', 'warehouse', 'memorandum']
+
+
+class CovertLossAdmin(object):
+    list_display = ['order_id', 'order_status', 'mistake_tag', 'customer', 'origin_order_category', 'origin_order_id',
+                    'department', 'des_department', 'ori_creator', 'date', 'goods_id',
+                    'goods_name', 'quantity', 'warehouse', 'memorandum']
+
+
 xadmin.site.register(CovertSIUnhandle, CovertSIUnhandleAdmin)
 xadmin.site.register(CovertSI, CovertSIAdmin)
 xadmin.site.register(CovertSOUnhandle, CovertSOUnhandleAdmin)
 xadmin.site.register(CovertSO, CovertSOAdmin)
 xadmin.site.register(StockoutList, StockoutListAdmin)
+xadmin.site.register(CovertLOUnhandle, CovertLOUnhandleAdmin)
+xadmin.site.register(CovertLoss, CovertLossAdmin)
 
 

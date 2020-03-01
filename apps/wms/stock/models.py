@@ -50,7 +50,7 @@ class DeptStockInfo(BaseModel):
     goods_name = models.ForeignKey(GoodsInfo, on_delete=models.CASCADE, verbose_name='货品名称')
     goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     warehouse = models.ForeignKey(WarehouseGeneral, on_delete=models.CASCADE, verbose_name='仓库')
-    vwarehouse = models.ForeignKey(WarehouseVirtual, related_name='vware', on_delete=models.CASCADE, verbose_name='虚拟仓')
+    vwarehouse = models.ForeignKey(WarehouseVirtual, related_name='vware', on_delete=models.CASCADE, verbose_name='部门仓')
     quantity = models.IntegerField(verbose_name='库存')
     memorandum = models.CharField(null=True, blank=True, max_length=200, verbose_name='备注')
 
@@ -59,9 +59,25 @@ class DeptStockInfo(BaseModel):
     class Meta:
         verbose_name = 'WMS-库存-部门仓'
         verbose_name_plural = verbose_name
-        index_together = ['goods_name', 'warehouse', 'vwarehouse']
+        index_together = ['department', 'goods_name', 'warehouse', 'vwarehouse']
         db_table = 'wms_stock_deptstock'
 
     def __str__(self):
         return str(self.vwarehouse)
+
+
+class MyDeptStock(DeptStockInfo):
+
+    class Meta:
+        verbose_name = 'WMS-库存-我的部门'
+        verbose_name_plural = verbose_name
+        proxy = True
+
+
+class TransDeptStock(DeptStockInfo):
+
+    class Meta:
+        verbose_name = 'WMS-库存-中转仓'
+        verbose_name_plural = verbose_name
+        proxy = True
 

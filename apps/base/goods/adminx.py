@@ -215,7 +215,7 @@ class GoodsInfoAdmin(object):
     list_display = ['order_status', 'manufactory', 'series', 'goods_name', 'goods_id', 'size', 'e_name', 'p_name', 'price',
                     'package_unit', 'logistics_time', 'order_time', 'memorandum', 'create_time', 'creator']
     search_fields = ['goods_name', 'goods_id',]
-    list_filter = ['manufactory', 'series__s_name',]
+    list_filter = ['manufactory__company_name', 'series__s_name', 'goods_id', 'e_name', 'p_name', 'order_time',]
     relfield_style = 'fk-ajax'
     form_layout = [
         Fieldset('必填信息',
