@@ -3007,7 +3007,7 @@ class OriSurplusAdmin(object):
     list_filter = ['mistake_tag', 'order_status', 'date', 'ori_creator', 'memorandum', 'goods_id', 'goods_name',
                    'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date', 'expiry_date']
 
-    search_fields = ['order_id', ]
+    search_fields = ['order_id', 'goods_id',]
 
     def has_add_permission(self):
         # 禁用添加按钮
@@ -3109,7 +3109,7 @@ class OriLOUnhandleAdmin(object):
     list_filter = ['mistake_tag', 'order_status', 'date', 'ori_creator', 'memorandum', 'goods_id', 'goods_name',
                    'goods_size', 'stock', 'check', 'quantity', 'warehouse', 'batch_num', 'produce_date', 'expiry_date']
 
-    search_fields = ['order_id', ]
+    search_fields = ['order_id', 'goods_id',]
     actions = [OriLOAction, RejectSelectedAction]
     import_data = True
 

@@ -24,7 +24,7 @@ from xadmin.layout import Fieldset
 
 from .models import CovertSI, CovertSIUnhandle, CovertSO, CovertSOUnhandle, StockoutList, CovertLOUnhandle, CovertLoss
 from apps.base.warehouse.models import WarehouseVirtual, WarehouseInfo
-from apps.base.relationship.models import DeptToVW
+from apps.base.relationship.models import DeptToVW, DeptToW
 from apps.wms.stock.models import StockInfo, DeptStockInfo
 
 ACTION_CHECKBOX_NAME = '_selected_action'
@@ -293,7 +293,7 @@ class CovertSIAdmin(object):
 
 
 # 递交出库调整单
-class OriLOAction(BaseActionView):
+class CovertSOAction(BaseActionView):
     action_name = "submit_loss_ori"
     description = "提交选中的订单"
     model_perm = 'change'
@@ -408,7 +408,7 @@ class CovertSOUnhandleAdmin(object):
 
     list_filter = ['mistake_tag', 'order_status', 'order_category', 'department__name', 'goods_name__goods_name',
                    'warehouse__warehouse_name', 'goods_id', 'sale_organization',  'date']
-    actions = [OriLOAction, ]
+    actions = [CovertSOAction, ]
     search_fields = ['order_id', 'origin_order_id']
 
     def queryset(self):
@@ -421,7 +421,7 @@ class CovertSOUnhandleAdmin(object):
         return False
 
 
-# 出库调整单
+# 盘点调整单的快捷部门选择。
 class CovertSOAdmin(object):
     list_display = ['order_id', 'customer', 'order_category', 'origin_order_category', 'origin_order_id',
                     'sale_organization', 'department', 'memorandum', 'ori_creator', 'date', 'goods_id', 'goods_name',
@@ -442,6 +442,47 @@ class StockoutListAdmin(object):
     list_filter = ['order_id', 'order_status']
     search_fields = ['order_id']
     readonly_fields = ['order_id', 'order_status', 'si_order_id',]
+
+
+# 递交出库调整单
+class LOSetDeptAction(BaseActionView):
+    action_name = "submit_set_department"
+    description = "处理选中的订单"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    modify_models_batch = False
+
+    @filter_hook
+    def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                for obj in queryset:
+                    self.log('change', '', obj)
+                    _q_repeat_so = StockoutList.objects.filter(order_id=obj.order_id)
+                    if _q_repeat_so.exists():
+                        self.message_user("单号%s不要重复点递交，多线程递交会造成程序错乱" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 1
+                        obj.save()
+                        continue
+
+
+                    obj.order_status = 2
+                    obj.mistake_tag = 0
+                    obj.save()
+
+            self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
+        return None
 
 
 class CovertLOUnhandleAdmin(object):

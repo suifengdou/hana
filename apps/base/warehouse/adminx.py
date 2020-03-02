@@ -52,7 +52,7 @@ class WarehouseInfoAdmin(object):
                 if result['repeated'] > 0:
                     self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
             else:
-                self.message_user('错误提示：%s' % result)
+                self.message_user('结果提示：%s' % result)
         return super(WarehouseInfoAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
