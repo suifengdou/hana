@@ -472,8 +472,10 @@ class LOSetDeptAction(BaseActionView):
                     _q_department = DeptToW.objects.filter(warehouse=obj.warehouse)
                     if _q_department.exists():
                         obj.des_department = _q_department[0].department
+                        obj.order_category = obj.des_department.category
                     else:
                         obj.des_department = des_department
+                        obj.order_category = obj.des_department.category
                     obj.save()
             self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
                               'success')
@@ -506,10 +508,12 @@ class LOSetFirstAction(BaseActionView):
                     self.log('change', '', obj)
                     if i == 0:
                         des_department = obj.des_department
+                        obj.order_category = obj.des_department.category
                         i += 1
                         continue
                     else:
                         obj.des_department = des_department
+                        obj.order_category = obj.des_department.category
                         i += 1
                     obj.save()
             self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
@@ -539,6 +543,12 @@ class CovertLOAction(BaseActionView):
             else:
                 for obj in queryset:
                     self.log('change', '', obj)
+                    if not obj.des_department:
+                        self.message_user("单号%s没有指定目的部门，不允许递交" % obj.order_id, "error")
+                        n -= 1
+                        obj.mistake_tag = 1
+                        obj.save()
+                        continue
                     _q_repeat_so = StockoutList.objects.filter(order_id=obj.order_id)
                     if _q_repeat_so.exists():
                         self.message_user("单号%s不要重复点递交，多线程递交会造成程序错乱" % obj.order_id, "error")
@@ -576,7 +586,7 @@ class CovertLOAction(BaseActionView):
                             obj.save()
                             continue
                         stock = StockInfo.objects.filter(warehouse=obj.warehouse, goods_name=obj.goods_name)[0]
-                        if obj.department.category == 1:
+                        if obj.des_department.category == 1:
                             stock.undistributed = stock.undistributed - obj.quantity
                             stock.quantity = stock.quantity - obj.quantity
                         else:

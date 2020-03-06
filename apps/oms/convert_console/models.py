@@ -179,9 +179,14 @@ class CovertLoss(BaseModel):
         (6, '保存部门仓失败'),
         (7, '部门没有此货品'),
     )
+    CATEGORY = (
+        (0, '独立出库'),
+        (1, '全局出库'),
+    )
 
     order_id = models.CharField(max_length=30, unique=True, verbose_name='单据编号')
     customer = models.CharField(max_length=60, verbose_name='客户')
+    order_category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='单据类型')
     origin_order_category = models.CharField(max_length=20, verbose_name='源单类型')
     origin_order_id = models.CharField(max_length=60, verbose_name='源单编号')
     sale_organization = models.CharField(max_length=30, verbose_name='销售组织')
