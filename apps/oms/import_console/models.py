@@ -112,7 +112,7 @@ class OriStockInInfo(BaseModel):
     goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     goods_name = models.CharField(max_length=60, verbose_name='物料名称')
     goods_size = models.CharField(max_length=60, verbose_name='规格型号')
-    goods_unit = models.CharField(max_length=60, verbose_name='库存单位')
+    goods_unit = models.CharField(max_length=60, null=True, blank=True, verbose_name='库存单位')
     quantity_receivable = models.IntegerField(default=0, verbose_name='应收数量')
     quantity_received = models.IntegerField(verbose_name='实收数量')
     batch_number = models.CharField(max_length=60, null=True, blank=True, verbose_name='批号')
@@ -553,7 +553,7 @@ class OriAllocation(BaseModel):
     produce_date = models.DateTimeField(max_length=60, verbose_name='生产日期')
     expiry_date = models.DateTimeField(max_length=60, verbose_name='有效期至')
     stockin_date = models.DateTimeField(max_length=60, verbose_name='入库日期')
-    customer = models.CharField(max_length=50, verbose_name='客户')
+    customer = models.CharField(max_length=50, null=True, blank=True, verbose_name='客户')
 
     si_tag = models.SmallIntegerField(choices=OPTIONS, default=0, verbose_name='入库创建')
     so_tag = models.SmallIntegerField(choices=OPTIONS, default=0, verbose_name='出库创建')

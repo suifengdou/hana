@@ -26,7 +26,7 @@ from .models import OriPRUnhandle, OriPurRefund, OriALUnhandle, OriAllocation, O
 from apps.oms.convert_console.models import CovertSI, CovertSO, CovertLoss
 from apps.base.warehouse.models import WarehouseGeneral
 from apps.base.goods.models import GoodsInfo
-from apps.oms.purchase.models import PurchaseInfo
+# from apps.oms.purchase.models import PurchaseInfo
 from apps.base.company.models import ManuInfo, CompanyInfo
 from apps.base.department.models import DepartmentInfo
 
@@ -3310,32 +3310,32 @@ class OirLossAdmin(object):
 
 
 # 原始采购单
-xadmin.site.register(OriPurchaseUnhandle, OriPurchaseUnhandleAdmin)
-xadmin.site.register(OriPurchaseInfo, OriPurchaseInfoAdmin)
+# xadmin.site.register(OriPurchaseUnhandle, OriPurchaseUnhandleAdmin)
+# xadmin.site.register(OriPurchaseInfo, OriPurchaseInfoAdmin)
 # 原始采购入库单
 xadmin.site.register(OriStockInUnhandle, OriStockInUnhandleAdmin)
 xadmin.site.register(OriStockInInfo, OriStockInInfoAdmin)
+# 原始其他入库单
+xadmin.site.register(OriNPSIUnhandle, OriNPSIUnhandleAdmin)
+xadmin.site.register(OriNPStockIn, OriNPStockInAdmin)
+# 原始盘盈单
+xadmin.site.register(OriSUUnhandle, OriSUUnhandleAdmin)
+xadmin.site.register(OriSurplus, OriSurplusAdmin)
+# 原始直接调拨单
+xadmin.site.register(OriALUnhandle, OriALUnhandleAdmin)
+xadmin.site.register(OriAllocation, OriAllocationAdmin)
 # 原始销售出库单
 xadmin.site.register(OriStockOutUnhandle, OriStockOutUnhandleAdmin)
 xadmin.site.register(OriStockOut, OriStockOutAdmin)
 # 原始其他出库单
 xadmin.site.register(OriNSSOUnhandle, OriNSSOUnhandleAdmin)
 xadmin.site.register(OriNSStockout, OriNSStockoutAdmin)
-# 原始其他入库单
-xadmin.site.register(OriNPSIUnhandle, OriNPSIUnhandleAdmin)
-xadmin.site.register(OriNPStockIn, OriNPStockInAdmin)
 # 原始销售退货单
 xadmin.site.register(OriRefundUnhandle, OriRefundUnhandleAdmin)
 xadmin.site.register(OriRefund, OriRefundAdmin)
 # 原始采购退料单
 xadmin.site.register(OriPRUnhandle, OriPRUnhandleAdmin)
 xadmin.site.register(OriPurRefund, OriPurRefundAdmin)
-# 原始直接调拨单
-xadmin.site.register(OriALUnhandle, OriALUnhandleAdmin)
-xadmin.site.register(OriAllocation, OriAllocationAdmin)
-# 原始盘盈单
-xadmin.site.register(OriSUUnhandle, OriSUUnhandleAdmin)
-xadmin.site.register(OriSurplus, OriSurplusAdmin)
 # 原始盘亏单
 xadmin.site.register(OriLOUnhandle, OriLOUnhandleAdmin)
 xadmin.site.register(OirLoss, OirLossAdmin)

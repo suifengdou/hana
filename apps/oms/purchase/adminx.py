@@ -43,7 +43,7 @@ class PurchaseTrackAdmin(object):
     list_filter = ['mistake_tag', 'purchase_time',]
 
 
-xadmin.site.register(PurchaseTrack, PurchaseTrackAdmin)
-xadmin.site.register(PurchaseInfo, PurchaseInfoAdmin)
+# xadmin.site.register(PurchaseTrack, PurchaseTrackAdmin)
+# xadmin.site.register(PurchaseInfo, PurchaseInfoAdmin)
 
 

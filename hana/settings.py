@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'apps.base.ragulation.apps.RagulationConfig',
     'apps.base.warehouse.apps.WarehosueConfig',
     'apps.base.changelog.apps.ChangelogConfig',
-    'apps.oms.purchase.apps.PurchaseConfig',
+    # 'apps.oms.purchase.apps.PurchaseConfig',
     'apps.oms.import_console.apps.ImportConsoleConfig',
     'apps.oms.convert_console.apps.ConvertConsoleConfig',
     'apps.oms.allot.apps.AllotConfig',

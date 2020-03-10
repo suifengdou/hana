@@ -365,8 +365,7 @@ class CovertSOAction(BaseActionView):
                             obj.mistake_tag = 5
                             obj.save()
                             continue
-                        convert_si = CovertSIUnhandle.objects.filter(department=obj.department,
-                                                                     goods_name=obj.goods_name,
+                        convert_si = CovertSIUnhandle.objects.filter(goods_name=obj.goods_name,
                                                                      warehouse=obj.warehouse).order_by('stockin_date')
 
                         minuend = obj.quantity
@@ -599,8 +598,7 @@ class CovertLOAction(BaseActionView):
                             obj.mistake_tag = 5
                             obj.save()
                             continue
-                        convert_si = CovertSIUnhandle.objects.filter(department=obj.des_department,
-                                                                     goods_name=obj.goods_name,
+                        convert_si = CovertSIUnhandle.objects.filter(goods_name=obj.goods_name,
                                                                      warehouse=obj.warehouse).order_by('stockin_date')
 
                         minuend = obj.quantity

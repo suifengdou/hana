@@ -25,10 +25,62 @@ from xadmin.layout import Fieldset
 
 
 from .models import StockInfo, DeptStockInfo, MyDeptStock, TransDeptStock
-# from apps.oms.predistribution.models import Undistribution
 from apps.base.relationship.models import DeptToVW, DeptToW
 from apps.base.warehouse.models import WarehouseVirtual
 from apps.oms.allot.models import VASOCheck
+
+
+# 快速生成虚拟调拨出库单
+class AOCreateAction(BaseActionView):
+    action_name = "submit_create_oa"
+    description = "快速生成库存到出库单"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    modify_models_batch = False
+
+    @filter_hook
+    def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                i = 0
+                for obj in queryset:
+                    i += 1
+                    self.log('change', '', obj)
+                    order_so = VASOCheck()
+
+                    prefix = "AO"
+                    serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":","").replace(".", "")[:12]
+                    suffix = 1000 + i
+                    order_id = prefix + str(serial_number) + str(suffix)
+                    order_so.order_id = order_id
+
+                    order_so.creator = self.request.user.username
+                    order_so.goods_name = obj.goods_name
+                    order_so.goods_id = obj.goods_id
+                    order_so.department = obj.department
+                    order_so.warehouse = obj.warehouse
+                    order_so.vwarehouse = obj.vwarehouse
+                    order_so.undistributed = obj.quantity
+                    order_so.quantity = obj.quantity
+                    order_so.dept_stock = obj
+                    try:
+                        order_so.save()
+                    except Exception as e:
+                        self.message_user("%s 创建虚拟出库单出错, %s" % (obj.order_id, e), "error")
+                        continue
+
+            self.message_user("成功生成 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
+        return None
 
 
 class VASOCheckInline(object):
@@ -91,13 +143,13 @@ class StockInfoAdmin(object):
 class MyDeptStockAdmin(object):
     list_display = ['department', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
     list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name', 'order_status']
-    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status']
+    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'department',]
     search_fields = ['goods_id', 'department__name']
     relfield_style = 'fk-ajax'
 
     form_layout = [
         Fieldset('存货信息',
-                 'goods_name', 'vwarehouse', 'warehouse', 'quantity'),
+                 'goods_name', 'vwarehouse', 'warehouse', 'quantity', 'department',),
         Fieldset('选填信息',
                  'memorandum'),
         Fieldset(None,
@@ -123,17 +175,18 @@ class TransDeptStockAdmin(object):
                    'order_status']
     search_fields = ['goods_id', 'department__name']
     readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'department']
-    inlines = [VASOCheckInline,]
+    inlines = [VASOCheckInline, ]
+    actions = [AOCreateAction, ]
     list_editable = ['memorandum']
     relfield_style = 'fk-ajax'
 
     form_layout = [
         Fieldset('存货信息',
-                 'goods_name', 'vwarehouse', 'department', 'warehouse', 'quantity'),
+                 'goods_name', 'vwarehouse', 'department', 'warehouse', 'quantity', 'department',),
         Fieldset('选填信息',
                  'memorandum'),
         Fieldset(None,
-                 'creator', 'order_status', 'is_delete', 'goods_id','create_time', 'update_time', **{"style": "display:None"}),
+                 'creator', 'order_status', 'is_delete', 'goods_id', **{"style": "display:None"}),
     ]
 
     def queryset(self):
@@ -154,8 +207,8 @@ class TransDeptStockAdmin(object):
             if not obj.order_id:
                 prefix = "AO"
                 serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":", "").replace(".", "")[:12]
-                suffix = 100 + i
-                order_id = prefix + str(serial_number) + str(suffix) + "A"
+                suffix = 1000 + i
+                order_id = prefix + str(serial_number) + str(suffix)
                 obj.order_id = order_id
 
             obj.creator = request.user.username
@@ -172,19 +225,40 @@ class TransDeptStockAdmin(object):
 class DeptStockInfoAdmin(object):
     list_display = ['department', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
     list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name', 'order_status']
-    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status']
+    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'department',]
     search_fields = ['goods_id', 'department__name']
     relfield_style = 'fk-ajax'
-
+    inlines = [VASOCheckInline, ]
     form_layout = [
         Fieldset('存货信息',
-                 'goods_name', 'vwarehouse', 'warehouse', 'quantity'),
+                 'goods_name', 'vwarehouse', 'warehouse', 'quantity', 'department',),
         Fieldset('选填信息',
                  'memorandum'),
         Fieldset(None,
                  'creator', 'order_status', 'is_delete', 'goods_id', **{"style": "display:None"}),
     ]
 
+    def save_related(self):
+
+        for i in range(self.formsets[0].forms.__len__()):
+            request = self.request
+            obj = self.formsets[0].forms[i].instance
+            if not obj.order_id:
+                prefix = "AO"
+                serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":", "").replace(".", "")[:12]
+                suffix = 1000 + i
+                order_id = prefix + str(serial_number) + str(suffix)
+                obj.order_id = order_id
+
+            obj.creator = request.user.username
+            obj.goods_name = self.org_obj.goods_name
+            obj.goods_id = self.org_obj.goods_id
+            obj.department = self.org_obj.department
+            obj.warehouse = self.org_obj.warehouse
+            obj.vwarehouse = self.org_obj.vwarehouse
+            obj.undistributed = obj.quantity
+
+        super().save_related()
 
 xadmin.site.register(StockInfo, StockInfoAdmin)
 xadmin.site.register(MyDeptStock, MyDeptStockAdmin)

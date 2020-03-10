@@ -12,7 +12,7 @@ from db.base_model import BaseModel
 from apps.base.department.models import DepartmentInfo
 from apps.base.goods.models import GoodsInfo
 from apps.base.company.models import CompanyInfo
-from apps.wms.stock.models import TransDeptStock
+from apps.wms.stock.models import DeptStockInfo
 from apps.base.warehouse.models import WarehouseGeneral, WarehouseVirtual
 
 
@@ -37,7 +37,7 @@ class VAllotSOInfo(BaseModel):
         (0, '计划出库'),
         (1, '临时出库'),
     )
-    dept_stock = models.ForeignKey(TransDeptStock, on_delete=models.CASCADE, verbose_name='源部门仓')
+    dept_stock = models.ForeignKey(DeptStockInfo, on_delete=models.CASCADE, verbose_name='源部门仓')
     order_id = models.CharField(max_length=50, unique=True, verbose_name='单据编号')
     order_category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='单据类型')
     department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, verbose_name='部门')
@@ -61,6 +61,9 @@ class VAllotSOInfo(BaseModel):
         return self.dept_stock.quantity
     dept_stock_quantity.short_description = '对应部门仓库存'
 
+    def __str__(self):
+        return str(self.order_id)
+
 
 class VASOCheck(VAllotSOInfo):
 
@@ -69,12 +72,18 @@ class VASOCheck(VAllotSOInfo):
         verbose_name_plural = verbose_name
         proxy = True
 
+    def __str__(self):
+        return str(self.order_id)
+
 
 class VASOHandle(VAllotSOInfo):
     class Meta:
         verbose_name = 'oms-a-未分配部门出库单'
         verbose_name_plural = verbose_name
         proxy = True
+
+    def __str__(self):
+        return str(self.order_id)
 
 
 class VAllotSIInfo(BaseModel):
@@ -90,7 +99,9 @@ class VAllotSIInfo(BaseModel):
         (1, '虚拟入库超出了出库数'),
         (2, '对应虚拟入库出错'),
         (3, '虚拟仓库存增加出错，需要联系管理员处理'),
-        (4, '部门仓实例保存错误'),
+        (4, '实仓可调拨库存数量错误'),
+        (5, '查不到实仓可调拨货品'),
+        (5, '实仓可调拨保存错误'),
 
     )
     CATEGORY = (
@@ -103,7 +114,7 @@ class VAllotSIInfo(BaseModel):
     ori_department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, related_name='ori_dept',
                                        verbose_name='源部门')
     ori_vwarehouse = models.ForeignKey(WarehouseVirtual, on_delete=models.CASCADE, related_name='ori_vware', verbose_name='源部门仓')
-    department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, verbose_name='部门')
+    department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, verbose_name='目的部门')
     goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     goods_name = models.ForeignKey(GoodsInfo, on_delete=models.CASCADE, verbose_name='物料名称')
     quantity = models.IntegerField(verbose_name='入库数量')
@@ -123,11 +134,23 @@ class VAllotSIInfo(BaseModel):
 
 
 class VASICheck(VAllotSIInfo):
+    VERIFY_FIELD = ['order_category', 'department', 'quantity', 'va_stockin']
 
     class Meta:
         verbose_name = 'oms-a-未审核部门入库单'
         verbose_name_plural = verbose_name
         proxy = True
+
+    def __str__(self):
+        return str(self.order_id)
+
+    @classmethod
+    def verify_mandatory(cls, columns_key):
+        for i in cls.VERIFY_FIELD:
+            if i not in columns_key:
+                return 'verify_field error, must have mandatory field: "{}""'.format(i)
+        else:
+            return None
 
 
 class VASIMine(VAllotSIInfo):
@@ -136,3 +159,6 @@ class VASIMine(VAllotSIInfo):
         verbose_name = 'oms-a-未处理部门入库单'
         verbose_name_plural = verbose_name
         proxy = True
+
+    def __str__(self):
+        return str(self.order_id)

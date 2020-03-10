@@ -23,10 +23,93 @@ from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 
 from .models import VAllotSOInfo, VASOCheck, VASOHandle, VAllotSIInfo, VASICheck, VASIMine
-from apps.wms.stock.models import DeptStockInfo
+from apps.wms.stock.models import DeptStockInfo, StockInfo
 from apps.base.relationship.models import DeptToVW
+from apps.base.department.models import DepartmentInfo
 
 ACTION_CHECKBOX_NAME = '_selected_action'
+
+
+class RejectSelectedAction(BaseActionView):
+
+    action_name = "reject_selected"
+    description = '驳回选中的单据'
+
+    delete_confirmation_template = None
+    delete_selected_confirmation_template = None
+
+    delete_models_batch = False
+
+    model_perm = 'change'
+    icon = 'fa fa-times'
+
+    @filter_hook
+    def reject_models(self, queryset):
+        n = queryset.count()
+        if n:
+            for obj in queryset:
+                if obj.order_status > 0:
+                    obj.order_status -= 1
+                    obj.save()
+                    if obj.order_status == 0:
+                        self.message_user("%s 取消成功" % obj.order_id, "success")
+                    else:
+                        self.message_user("%s 驳回上一级成功" % obj.order_id, "success")
+                else:
+                    n -= 1
+                    self.message_user("%s 单据状态错误，请检查，驳回出错。" % obj.order_id, "error")
+            self.message_user("成功驳回 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+        return None
+
+    @filter_hook
+    def do_action(self, queryset):
+        # Check that the user has delete permission for the actual model
+        if not self.has_change_permission():
+            raise PermissionDenied
+
+        using = router.db_for_write(self.model)
+
+        # Populate deletable_objects, a data structure of all related objects that
+        # will also be deleted.
+        deletable_objects, model_count, perms_needed, protected = get_deleted_objects(
+            queryset, self.opts, self.user, self.admin_site, using)
+
+        # The user has already confirmed the deletion.
+        # Do the deletion and return a None to display the change list view again.
+        if self.request.POST.get('post'):
+            if not self.has_change_permission():
+                raise PermissionDenied
+            self.reject_models(queryset)
+            # Return None to display the change list page again.
+            return None
+
+        if len(queryset) == 1:
+            objects_name = force_text(self.opts.verbose_name)
+        else:
+            objects_name = force_text(self.opts.verbose_name_plural)
+        perms_needed = []
+        if perms_needed or protected:
+            title = "Cannot reject %(name)s" % {"name": objects_name}
+        else:
+            title = "Are you sure?"
+
+        context = self.get_context()
+        context.update({
+            "title": title,
+            "objects_name": objects_name,
+            "deletable_objects": [deletable_objects],
+            'queryset': queryset,
+            "perms_lacking": perms_needed,
+            "protected": protected,
+            "opts": self.opts,
+            "app_label": self.app_label,
+            'action_checkbox_name': ACTION_CHECKBOX_NAME,
+        })
+
+        # Display the confirmation page
+        return TemplateResponse(self.request, self.delete_selected_confirmation_template or
+                                self.get_template_list('views/model_reject_selected_confirm.html'), context)
 
 
 # 入库单关联模块，让入库单关联出库单
@@ -80,6 +163,30 @@ class AOSubmitAction(BaseActionView):
                             obj.mistake_tag = 2
                             obj.save()
                             continue
+                    if obj.department.category == 1:
+                        _q_stock = StockInfo.objects.filter(goods_name=obj.goods_name, warehouse=obj.warehouse)
+                        if _q_stock.exists():
+                            stock = _q_stock[0]
+                            stock.undistributed -= obj.quantity
+                            if stock.undistributed < 0:
+                                self.message_user("%s 实仓可调拨库存数量错误, %s" % (obj.order_id, e), "error")
+                                obj.mistake_tag = 4
+                                obj.save()
+                                continue
+                            else:
+                                try:
+                                    stock.save()
+                                except Exception as e:
+                                    self.message_user("%s 实仓可调拨保存错误, %s" % (obj.order_id, e), "error")
+                                    obj.mistake_tag = 6
+                                    obj.save()
+                                    continue
+                        else:
+                            self.message_user("%s 查不到实仓可调拨货品, %s" % (obj.order_id, e), "error")
+                            obj.mistake_tag = 5
+                            obj.save()
+                            continue
+                        pass
                     obj.order_status = 2
                     obj.mistake_tag = 0
                     try:
@@ -102,7 +209,7 @@ class VASOCheckAdmin(object):
     list_filter = ['order_status', 'mistake_tag', 'goods_name__goods_name', 'warehouse__warehouse_name',
                    'vwarehouse__warehouse_name', 'department__name', 'goods_id', 'quantity']
 
-    actions = [AOSubmitAction]
+    actions = [AOSubmitAction, RejectSelectedAction]
     readonly_fields = ['dept_stock', 'order_id', 'order_category', 'department', 'goods_id', 'goods_name',
                        'undistributed', 'warehouse', 'vwarehouse', 'mistake_tag', 'order_status', 'is_delete',
                        'creator', 'create_time', 'update_time']
@@ -169,12 +276,11 @@ class VASOHandleAdmin(object):
                 obj.vwarehouse = _q_vwarehouse[0].warehouse
 
             if not obj.order_id:
-                prefix = "A"
+                prefix = "AI"
                 serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":", "").replace(".", "")[:12]
-                suffix = 100 + i
-                order_id = prefix + str(serial_number) + str(suffix) + "A"
+                suffix = 1000 + i
+                order_id = prefix + str(serial_number) + str(suffix)
                 obj.order_id = order_id
-
 
             obj.warehouse = self.org_obj.warehouse
             obj.ori_vwarehouse = self.org_obj.vwarehouse
@@ -182,7 +288,6 @@ class VASOHandleAdmin(object):
             obj.creator = request.user.username
             obj.goods_name = self.org_obj.goods_name
             obj.goods_id = self.org_obj.goods_id
-            obj.order_status = self.org_obj.order_status
 
         super().save_related()
 
@@ -206,10 +311,6 @@ class VAllotSOInfoAdmin(object):
                  'mistake_tag', 'creator', 'order_status', 'is_delete', 'dept_stock', **{"style": "display:None"}),
     ]
 
-    def queryset(self):
-        queryset = super(VAllotSOInfoAdmin, self).queryset()
-        queryset = queryset.filter(is_delete=0, order_status=3)
-        return queryset
 
     def has_add_permission(self):
         # 禁用添加按钮
@@ -236,8 +337,11 @@ class VASICheckAction(BaseActionView):
                          '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
                 queryset.update(status=2)
             else:
+                check_uq = 0
                 for obj in queryset:
                     self.log('change', '', obj)
+                    if check_uq:
+                        obj.va_stockin.undistributed = check_uq
                     _q_dept_stock = DeptStockInfo.objects.filter(department=obj.department, goods_name=obj.goods_name,
                                                                  warehouse=obj.warehouse, vwarehouse=obj.vwarehouse)
 
@@ -250,18 +354,22 @@ class VASICheckAction(BaseActionView):
                         for key in fields:
                             value = getattr(obj, key, None)
                             setattr(dept_stock, key, value)
-                    obj.va_stockin.undistributed -= dept_stock.quantity
-                    if obj.va_stockin.undistributed < 0:
+                    check_uq = obj.va_stockin.undistributed - obj.quantity
+                    if check_uq < 0:
                         self.message_user("%s 虚拟入库超过了对应出库数" % obj.order_id, "error")
                         obj.error_tag = 1
                         obj.save()
+                        n -= 1
+                        continue
                     else:
                         try:
+                            obj.va_stockin.undistributed = check_uq
                             obj.va_stockin.save()
                         except Exception as e:
                             self.message_user("%s 更新对应虚拟入库出错, %s" % (obj.order_id, e), "error")
                             obj.mistake_tag = 2
                             obj.save()
+                            n -= 1
                             continue
                     try:
                         dept_stock.save()
@@ -269,10 +377,11 @@ class VASICheckAction(BaseActionView):
                         self.message_user("%s 单据保存出错, %s" % (obj.order_id, e), "error")
                         obj.mistake_tag = 3
                         obj.save()
+                        n -= 1
                         continue
-                obj.order_status = 2
-                obj.mistake_tag = 0
-                obj.save()
+                    obj.order_status = 2
+                    obj.mistake_tag = 0
+                    obj.save()
             self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
                               'success')
         return None
@@ -280,23 +389,195 @@ class VASICheckAction(BaseActionView):
 
 # 调拨入库单审核界面
 class VASICheckAdmin(object):
-    list_display = ['order_id', 'order_status', 'mistake_tag', 'order_category', 'ori_department', 'department',
-                    'ori_vwarehouse', 'vwarehouse', 'warehouse', 'goods_name', 'goods_id', 'quantity',
-                    'memorandum', ]
+    list_display = ['order_id', 'order_status', 'mistake_tag',   'department', 'quantity', 'goods_name', 'goods_id',
+                     'vwarehouse', 'warehouse',   'va_stockin',
+                    'ori_department', 'ori_vwarehouse', 'order_category', 'memorandum', ]
     list_filter = ['order_status', 'mistake_tag', 'order_category', 'department__name', 'ori_department__name', 'ori_vwarehouse__warehouse_name', 'vwarehouse__warehouse_name', 'warehouse__warehouse_name','goods_name__goods_name', 'goods_id',]
     search_fields = ['order_id', 'goods_id']
-    actions = [VASICheckAction, ]
-    list_editable = ['memorandum']
+    actions = [VASICheckAction, RejectSelectedAction]
+    list_editable = ['memorandum', 'quantity']
     readonly_fields = ['va_stockin', 'order_id', 'order_category', 'ori_department','ori_vwarehouse', 'department', 'goods_id',
-                       'goods_name', 'quantity', 'warehouse', 'vwarehouse', 'order_status', 'mistake_tag']
+                       'goods_name',  'warehouse', 'vwarehouse', 'order_status', 'mistake_tag']
     form_layout = [
         Fieldset('主要信息',
                   'order_id', 'goods_name', 'order_category',  'quantity', 'ori_department', 'ori_vwarehouse', 'warehouse', 'vwarehouse', 'department'),
         Fieldset('一般信息',
                  'memorandum'),
         Fieldset(None,
-                 'va_stockin', 'mistake_tag', 'creator', 'order_status', 'is_delete', 'dept_stock', **{"style": "display:None"}),
+                 'va_stockin', 'mistake_tag', 'creator', 'order_status', 'is_delete', **{"style": "display:None"}),
     ]
+    import_data = True
+
+    def post(self, request, *args, **kwargs):
+
+        file = request.FILES.get('file', None)
+        if file:
+            result = self.handle_upload_file(file)
+            if isinstance(result, int):
+                self.message_user('导入成功数据%s条' % result['successful'], 'success')
+                if result['false'] > 0:
+                    self.message_user('导入失败数据%s条,主要的错误是%s' % (result['false'], result['error']), 'warning')
+                if result['repeated'] > 0:
+                    self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
+            else:
+                self.message_user('结果提示：%s' % result)
+        return super(VASICheckAdmin, self).post(request, *args, **kwargs)
+
+    def handle_upload_file(self, _file):
+        INIT_FIELDS_DIC = {
+            '单据类型': 'order_category',
+            '目的部门': 'department',
+            '入库数量': 'quantity',
+            '关联入库单': 'va_stockin',
+        }
+        ALLOWED_EXTENSIONS = ['xls', 'xlsx']
+        report_dic = {"successful": 0, "discard": 0, "false": 0, "repeated": 0, "error": []}
+
+        if '.' in _file.name and _file.name.rsplit('.')[-1] in ALLOWED_EXTENSIONS:
+            with pd.ExcelFile(_file) as xls:
+                df = pd.read_excel(xls, sheet_name=0)
+                FILTER_FIELDS = ['单据类型',  '目的部门', '入库数量', '关联入库单']
+                try:
+                    df = df[FILTER_FIELDS]
+                except Exception as e:
+                    report_dic["error"].append(e)
+                    return report_dic
+
+                # 获取表头，对表头进行转换成数据库字段名
+                columns_key = df.columns.values.tolist()
+                for i in range(len(columns_key)):
+                    columns_key[i] = columns_key[i].replace(' ', '').replace('=', '')
+
+                for i in range(len(columns_key)):
+                    if INIT_FIELDS_DIC.get(columns_key[i], None) is not None:
+                        columns_key[i] = INIT_FIELDS_DIC.get(columns_key[i])
+
+                # 验证一下必要的核心字段是否存在
+                _ret_verify_field = VASICheck.verify_mandatory(columns_key)
+                if _ret_verify_field is not None:
+                    return _ret_verify_field
+
+                # 更改一下DataFrame的表名称
+                columns_key_ori = df.columns.values.tolist()
+                ret_columns_key = dict(zip(columns_key_ori, columns_key))
+                df.rename(columns=ret_columns_key, inplace=True)
+
+                # 获取导入表格的字典，每一行一个字典。这个字典最后显示是个list
+                _ret_list = df.to_dict(orient='records')
+                intermediate_report_dic = self.save_resources(_ret_list)
+                for k, v in intermediate_report_dic.items():
+                    if k == "error":
+                        if intermediate_report_dic["error"]:
+                            report_dic[k].append(v)
+                    else:
+                        report_dic[k] += v
+                return report_dic
+
+        # 以下是csv处理逻辑，和上面的处理逻辑基本一致。
+        elif '.' in _file.name and _file.name.rsplit('.')[-1] == 'csv':
+            df = pd.read_csv(_file, encoding="GBK", chunksize=300)
+
+            for piece in df:
+                # 获取表头
+                columns_key = piece.columns.values.tolist()
+                # 剔除表头中特殊字符等于号和空格
+                for i in range(len(columns_key)):
+                    columns_key[i] = columns_key[i].replace(' ', '').replace('=', '')
+                # 循环处理对应的预先设置，转换成数据库字段名称
+                for i in range(len(columns_key)):
+                    if INIT_FIELDS_DIC.get(columns_key[i], None) is not None:
+                        columns_key[i] = INIT_FIELDS_DIC.get(columns_key[i])
+                # 直接调用验证函数进行验证
+                _ret_verify_field = VASICheck.verify_mandatory(columns_key)
+                if _ret_verify_field is not None:
+                    return _ret_verify_field
+                # 验证通过进行重新处理。
+                columns_key_ori = piece.columns.values.tolist()
+                ret_columns_key = dict(zip(columns_key_ori, columns_key))
+                piece.rename(columns=ret_columns_key, inplace=True)
+                _ret_list = piece.to_dict(orient='records')
+                intermediate_report_dic = self.save_resources(_ret_list)
+                for k, v in intermediate_report_dic.items():
+                    if k == "error":
+                        if intermediate_report_dic["error"]:
+                            report_dic[k].append(v)
+                    else:
+                        report_dic[k] += v
+            return report_dic
+
+        else:
+            return "只支持excel和csv文件格式！"
+
+    def save_resources(self, resource):
+        # 设置初始报告
+        report_dic = {"successful": 0, "discard": 0, "false": 0, "repeated": 0, "error": []}
+
+        # 开始导入数据
+        i = 0
+        for row in resource:
+            i += 1
+            order = VASICheck()  # 创建表格每一行为一个对象
+            for k, v in row.items():
+                if not row[k]:
+                    report_dic["false"] += 1
+                    report_dic["error"].append('不允许为空：%s' % row[k])
+                    continue
+                if k == 'quantity':
+                    row[k] = int(str(v).replace("'", '').replace(' ', ''))
+                else:
+                    row[k] = str(v).replace("'", '').replace(' ', '')
+
+
+            prefix = "AI"
+            serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":", "").replace(".", "")[:12]
+            suffix = 1000 + i
+            order_id = prefix + str(serial_number) + str(suffix)
+            order.order_id = order_id
+
+            _q_department = DepartmentInfo.objects.filter(name=row['department'])
+            if _q_department.exists():
+                department = _q_department[0]
+            else:
+                report_dic["false"] += 1
+                report_dic["error"].append('不存在此部门：%s' % row['department'])
+                continue
+
+            _q_dept_warehouse = DeptToVW.objects.filter(department=department)
+            if _q_dept_warehouse.exists():
+                vwarehouse = _q_dept_warehouse[0].warehouse
+            else:
+                report_dic["false"] += 1
+                report_dic["error"].append('部门不存在部门仓：%s，此案创建部门仓再操作！' % row['department'])
+                continue
+
+            order.department = department
+            order.vwarehouse = vwarehouse
+            order.quantity = row['quantity']
+
+            _q_va_stockin = VASOHandle.objects.filter(order_id=row['va_stockin'])
+            if _q_va_stockin.exists():
+                va_stockin = _q_va_stockin[0]
+            else:
+                report_dic["false"] += 1
+                report_dic["error"].append('不存在此虚拟出库单：%s' % row['va_stockin'])
+                continue
+
+            order.goods_name = va_stockin.goods_name
+            order.goods_id = va_stockin.goods_id
+            order.ori_department = va_stockin.department
+            order.warehouse = va_stockin.warehouse
+            order.ori_vwarehouse = va_stockin.vwarehouse
+            order.va_stockin = va_stockin
+
+            try:
+                order.creator = self.request.user.username
+                order.save()
+                report_dic["successful"] += 1
+            # 保存出错，直接错误条数计数加一。
+            except Exception as e:
+                report_dic["error"].append(e)
+                report_dic["false"] += 1
+        return report_dic
 
     def queryset(self):
         queryset = super(VASICheckAdmin, self).queryset()
@@ -341,8 +622,8 @@ class VASIHandleAction(BaseActionView):
 
 # 本部门虚拟入库列表
 class VASIMineAdmin(object):
-    list_display = ['order_id', 'order_status', 'mistake_tag', 'order_category', 'ori_department',
-                    'ori_vwarehouse', 'vwarehouse', 'warehouse', 'goods_name', 'goods_id', 'quantity', 'department',
+    list_display = ['order_id', 'order_status', 'mistake_tag', 'order_category', 'ori_department', 'ori_vwarehouse',
+                    'vwarehouse', 'warehouse', 'goods_name', 'goods_id', 'quantity', 'department', 'va_stockin',
                     'memorandum', ]
     list_filter = ['order_status', 'mistake_tag', 'order_category', 'department__name', 'ori_department__name', 'ori_vwarehouse__warehouse_name', 'vwarehouse__warehouse_name', 'warehouse__warehouse_name','goods_name__goods_name', 'goods_id',]
     search_fields = ['order_id', 'goods_id']
@@ -386,11 +667,6 @@ class VAllotSIInfoAdmin(object):
         Fieldset(None,
                  'va_stockin', 'mistake_tag', 'creator', 'order_status', 'is_delete', 'dept_stock', **{"style": "display:None"}),
     ]
-
-    def queryset(self):
-        queryset = super(VAllotSIInfoAdmin, self).queryset()
-        queryset = queryset.filter(is_delete=0, order_status=3)
-        return queryset
 
     def has_add_permission(self):
         # 禁用添加按钮
