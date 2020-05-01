@@ -6,11 +6,8 @@
 # @Software:  PyCharm
 
 from django.db import models
-import django.utils.timezone as timezone
-import pandas as pd
 
 from db.base_model import BaseModel
-from apps.base.company.models import CompanyInfo
 from apps.base.warehouse.models import WarehouseInfo
 from apps.base.goods.models import GoodsInfo
 from apps .base.department.models import DepartmentInfo
@@ -37,7 +34,7 @@ class CovertSI(BaseModel):
     )
     order_id = models.CharField(max_length=60, verbose_name='单据编号', unique=True, db_index=True)
     order_category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='单据类型')
-    supplier = models.ForeignKey(CompanyInfo, on_delete=models.CASCADE, verbose_name='供货方')
+    supplier = models.CharField(null=True, blank=True, max_length=160, verbose_name='供货方')
     department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, verbose_name='部门')
     create_date = models.DateTimeField(verbose_name='创建日期')
     seller = models.CharField(max_length=60, null=True, blank=True, verbose_name='结算方')

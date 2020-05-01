@@ -20,14 +20,14 @@ from xadmin.views.base import filter_hook
 from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 
-from .models import WarehouseInfo, WarehouseGeneral, WarehouseManu, WarehouseVirtual
+from .models import WarehouseInfo,  WarehouseVirtual
 
 ACTION_CHECKBOX_NAME = '_selected_action'
 
 
 class WarehouseInfoAdmin(object):
-    list_display = ['warehouse_id', 'warehouse_name', 'city', 'category', 'order_status']
-    list_filter = ['category', 'order_status']
+    list_display = ['warehouse_id', 'warehouse_name', 'attribute', 'category', 'city',  'order_status']
+    list_filter = ['category', 'attribute', 'category', 'order_status']
     search_fields = ['warehouse_name']
     relfield_style = 'fk-ajax'
     # model_icon = 'fa fa-university'
@@ -59,6 +59,8 @@ class WarehouseInfoAdmin(object):
         INIT_FIELDS_DIC = {
             '仓库ID': 'warehouse_id',
             '仓库名称': 'warehouse_name',
+            '仓库属性': 'attribute',
+            '仓库类型': 'category',
         }
         ALLOWED_EXTENSIONS = ['xls', 'xlsx']
         report_dic = {"successful": 0, "discard": 0, "false": 0, "repeated": 0, "error": []}
@@ -66,7 +68,7 @@ class WarehouseInfoAdmin(object):
         if '.' in _file.name and _file.name.rsplit('.')[-1] in ALLOWED_EXTENSIONS:
             with pd.ExcelFile(_file) as xls:
                 df = pd.read_excel(xls, sheet_name=0)
-                FILTER_FIELDS = ['仓库ID', '仓库名称']
+                FILTER_FIELDS = ['仓库ID', '仓库名称', '仓库属性', '仓库类型']
 
                 try:
                     df = df[FILTER_FIELDS]
@@ -149,7 +151,7 @@ class WarehouseInfoAdmin(object):
             order = WarehouseInfo()  # 创建表格每一行为一个对象
             for k, v in row.items():
                 if re.match(r'^=', str(v)):
-                    row[k] = v.replace('=', '').replace('"', '')
+                    row[k] = v.replace('=', '').replace('"', '').replace(' ', '')
 
             warehouse_name = str(row["warehouse_name"])
             warehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse_name)
@@ -158,13 +160,20 @@ class WarehouseInfoAdmin(object):
                 report_dic["error"].append('%s仓库已经存在' % warehouse_name)
                 continue
 
-            for k, v in row.items():
-                # 查询是否有这个字段属性，如果有就更新到对象。nan, NaT 是pandas处理数据时候生成的。
-                if hasattr(order, k):
-                    if str(v) in ['nan', 'NaT']:
-                        pass
-                    else:
-                        setattr(order, k, v)  # 更新对象属性为字典对应键值
+            attribute_dic = {
+                '自有本仓': 0,
+                '自有外仓': 1,
+                '寄售仓': 2,
+                '直营仓': 3,
+            }
+            order.attribute = attribute_dic.get(row['attribute'], 0)
+            category_dic = {
+                '普通仓库': 0,
+                '第三方仓储': 1,
+            }
+            order.category = category_dic.get(row['category'], 0)
+            order.warehouse_id = row['warehouse_id']
+            order.warehouse_name = warehouse_name
             try:
                 order.creator = self.request.user.username
                 order.save()
@@ -181,52 +190,6 @@ class WarehouseInfoAdmin(object):
         obj.creator = request.user.username
         obj.save()
         super(WarehouseInfoAdmin, self).save_models()
-
-
-class WarehouseGeneralAdmin(object):
-    list_display = ['warehouse_id', 'warehouse_name', 'city', 'category', 'order_status']
-    list_filter = ['category', 'order_status']
-    search_fields = ['warehouse_name']
-    relfield_style = 'fk-ajax'
-    # model_icon = 'fa fa-university'
-    form_layout = [
-        Fieldset('必填信息',
-                 'warehouse_id','warehouse_name', 'category', 'order_status'),
-        Fieldset(None,
-                 'creator', 'is_delete', **{"style": "display:None"}),
-    ]
-
-    def has_add_permission(self):
-        # 禁用添加按钮
-        return False
-
-    def queryset(self):
-        queryset = super(WarehouseGeneralAdmin, self).queryset()
-        queryset = queryset.filter(category=0)
-        return queryset
-
-
-class WarehouseManuAdmin(object):
-    list_display = ['warehouse_id', 'warehouse_name', 'city', 'category', 'order_status']
-    list_filter = ['category', 'order_status']
-    search_fields = ['warehouse_name']
-    relfield_style = 'fk-ajax'
-    # model_icon = 'fa fa-university'
-    form_layout = [
-        Fieldset('必填信息',
-                 'warehouse_id','warehouse_name', 'category', 'order_status'),
-        Fieldset(None,
-                 'creator', 'is_delete', **{"style": "display:None"}),
-    ]
-
-    def has_add_permission(self):
-        # 禁用添加按钮
-        return False
-
-    def queryset(self):
-        queryset = super(WarehouseManuAdmin, self).queryset()
-        queryset = queryset.filter(category=1)
-        return queryset
 
 
 class WarehouseVirtualAdmin(object):
@@ -380,7 +343,5 @@ class WarehouseVirtualAdmin(object):
         return report_dic
 
 
-xadmin.site.register(WarehouseGeneral, WarehouseGeneralAdmin)
-xadmin.site.register(WarehouseManu, WarehouseManuAdmin)
 xadmin.site.register(WarehouseInfo, WarehouseInfoAdmin)
 xadmin.site.register(WarehouseVirtual, WarehouseVirtualAdmin)

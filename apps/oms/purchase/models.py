@@ -6,11 +6,9 @@
 # @Software:  PyCharm
 
 from django.db import models
-import django.utils.timezone as timezone
-import pandas as pd
 
 from db.base_model import BaseModel
-from apps.base.company.models import MineInfo, ManuInfo
+from apps.base.company.models import ManuInfo
 from apps.base.goods.models import GoodsInfo
 
 

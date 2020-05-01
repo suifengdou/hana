@@ -25,7 +25,7 @@ from xadmin.layout import Fieldset
 from .models import VAllotSOInfo, VASOCheck, VASOHandle, VAllotSIInfo, VASICheck, VASIMine
 from apps.wms.stock.models import DeptStockInfo, StockInfo
 from apps.base.relationship.models import DeptToVW
-from apps.base.department.models import DepartmentInfo
+from apps.base.department.models import CentreInfo
 
 ACTION_CHECKBOX_NAME = '_selected_action'
 
@@ -115,7 +115,7 @@ class RejectSelectedAction(BaseActionView):
 # 入库单关联模块，让入库单关联出库单
 class VASICheckInline(object):
     model = VASICheck
-    exclude = ['va_stockin', 'order_id', 'order_category', 'ori_department', 'goods_id', 'goods_name',
+    exclude = ['va_stockin', 'order_id', 'order_category', 'ori_centre', 'goods_id', 'goods_name',
                'warehouse', 'order_status', 'mistake_tag', 'creator', 'ori_vwarehouse', 'is_delete', 'vwarehouse']
 
     extra = 1
@@ -163,7 +163,7 @@ class AOSubmitAction(BaseActionView):
                             obj.mistake_tag = 2
                             obj.save()
                             continue
-                    if obj.department.category == 1:
+                    if obj.centre.category == 1:
                         _q_stock = StockInfo.objects.filter(goods_name=obj.goods_name, warehouse=obj.warehouse)
                         if _q_stock.exists():
                             stock = _q_stock[0]
@@ -204,19 +204,19 @@ class AOSubmitAction(BaseActionView):
 
 
 class VASOCheckAdmin(object):
-    list_display = ['order_id', 'order_status', 'mistake_tag', 'goods_name', 'warehouse', 'vwarehouse', 'department',
+    list_display = ['order_id', 'order_status', 'mistake_tag', 'goods_name', 'warehouse', 'vwarehouse', 'centre',
                     'goods_id', 'quantity', 'undistributed', 'dept_stock_quantity', 'memorandum']
     list_filter = ['order_status', 'mistake_tag', 'goods_name__goods_name', 'warehouse__warehouse_name',
-                   'vwarehouse__warehouse_name', 'department__name', 'goods_id', 'quantity']
+                   'vwarehouse__warehouse_name', 'centre__name', 'goods_id', 'quantity']
 
     actions = [AOSubmitAction, RejectSelectedAction]
-    readonly_fields = ['dept_stock', 'order_id', 'order_category', 'department', 'goods_id', 'goods_name',
+    readonly_fields = ['dept_stock', 'order_id', 'order_category', 'centre', 'goods_id', 'goods_name',
                        'undistributed', 'warehouse', 'vwarehouse', 'mistake_tag', 'order_status', 'is_delete',
                        'creator', 'create_time', 'update_time']
 
     form_layout = [
         Fieldset('主要信息',
-                  'order_id', 'goods_name', 'order_category',  'quantity', 'undistributed', 'warehouse', 'vwarehouse', 'department'),
+                  'order_id', 'goods_name', 'order_category',  'quantity', 'undistributed', 'warehouse', 'vwarehouse', 'centre'),
         Fieldset('一般信息',
                  'memorandum'),
         Fieldset(None,
@@ -241,19 +241,19 @@ class VASOCheckAdmin(object):
 
 # 未分配调拨出库单
 class VASOHandleAdmin(object):
-    list_display = ['order_id', 'order_status', 'mistake_tag', 'goods_name', 'warehouse', 'vwarehouse', 'department',
+    list_display = ['order_id', 'order_status', 'mistake_tag', 'goods_name', 'warehouse', 'vwarehouse', 'centre',
                     'goods_id', 'quantity', 'undistributed', 'memorandum']
     list_filter = ['order_status', 'mistake_tag', 'goods_name__goods_name', 'warehouse__warehouse_name',
-                   'vwarehouse__warehouse_name', 'department__name', 'goods_id', 'quantity']
+                   'vwarehouse__warehouse_name', 'centre__name', 'goods_id', 'quantity']
     inlines = [VASICheckInline, ]
     actions = []
-    readonly_fields = ['dept_stock', 'order_id', 'order_category', 'department', 'goods_id', 'goods_name', 'quantity',
+    readonly_fields = ['dept_stock', 'order_id', 'order_category', 'centre', 'goods_id', 'goods_name', 'quantity',
                        'undistributed', 'warehouse', 'vwarehouse', 'mistake_tag', 'order_status', 'is_delete',
                        'creator', 'create_time', 'update_time']
 
     form_layout = [
         Fieldset('主要信息',
-                  'order_id', 'goods_name', 'goods_id', 'order_category',  'quantity', 'undistributed', 'warehouse', 'vwarehouse', 'department'),
+                  'order_id', 'goods_name', 'goods_id', 'order_category',  'quantity', 'undistributed', 'warehouse', 'vwarehouse', 'centre'),
         Fieldset('一般信息',
                  'memorandum'),
         Fieldset(None,
@@ -271,7 +271,7 @@ class VASOHandleAdmin(object):
         for i in range(self.formsets[0].forms.__len__()):
             request = self.request
             obj = self.formsets[0].forms[i].instance
-            _q_vwarehouse = DeptToVW.objects.filter(department=obj.department)
+            _q_vwarehouse = DeptToVW.objects.filter(centre=obj.centre)
             if _q_vwarehouse.exists():
                 obj.vwarehouse = _q_vwarehouse[0].warehouse
 
@@ -284,7 +284,7 @@ class VASOHandleAdmin(object):
 
             obj.warehouse = self.org_obj.warehouse
             obj.ori_vwarehouse = self.org_obj.vwarehouse
-            obj.ori_department = self.org_obj.department
+            obj.ori_centre = self.org_obj.centre
             obj.creator = request.user.username
             obj.goods_name = self.org_obj.goods_name
             obj.goods_id = self.org_obj.goods_id
@@ -293,13 +293,13 @@ class VASOHandleAdmin(object):
 
 
 class VAllotSOInfoAdmin(object):
-    list_display = ['order_id', 'order_status', 'mistake_tag', 'goods_name', 'warehouse', 'vwarehouse', 'department',
+    list_display = ['order_id', 'order_status', 'mistake_tag', 'goods_name', 'warehouse', 'vwarehouse', 'centre',
                     'goods_id', 'quantity', 'undistributed', 'memorandum']
     list_filter = ['order_status', 'mistake_tag', 'goods_name__goods_name', 'warehouse__warehouse_name',
-                   'vwarehouse__warehouse_name', 'department__name', 'goods_id', 'quantity']
+                   'vwarehouse__warehouse_name', 'centre__name', 'goods_id', 'quantity']
     inlines = [VASICheckInline, ]
     actions = []
-    readonly_fields = ['dept_stock', 'order_id', 'order_category', 'department', 'goods_id', 'goods_name', 'quantity',
+    readonly_fields = ['dept_stock', 'order_id', 'order_category', 'centre', 'goods_id', 'goods_name', 'quantity',
                        'undistributed', 'warehouse', 'vwarehouse', 'mistake_tag', 'order_status', 'is_delete', 'creator', 'create_time', 'update_time']
 
     form_layout = [
@@ -342,7 +342,7 @@ class VASICheckAction(BaseActionView):
                     self.log('change', '', obj)
                     if check_uq:
                         obj.va_stockin.undistributed = check_uq
-                    _q_dept_stock = DeptStockInfo.objects.filter(department=obj.department, goods_name=obj.goods_name,
+                    _q_dept_stock = DeptStockInfo.objects.filter(centre=obj.centre, goods_name=obj.goods_name,
                                                                  warehouse=obj.warehouse, vwarehouse=obj.vwarehouse)
 
                     if _q_dept_stock.exists():
@@ -350,7 +350,7 @@ class VASICheckAction(BaseActionView):
                         dept_stock.quantity += obj.quantity
                     else:
                         dept_stock = DeptStockInfo()
-                        fields = ['department', 'goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity']
+                        fields = ['centre', 'goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity']
                         for key in fields:
                             value = getattr(obj, key, None)
                             setattr(dept_stock, key, value)
@@ -389,18 +389,18 @@ class VASICheckAction(BaseActionView):
 
 # 调拨入库单审核界面
 class VASICheckAdmin(object):
-    list_display = ['order_id', 'order_status', 'mistake_tag',   'department', 'quantity', 'goods_name', 'goods_id',
+    list_display = ['order_id', 'order_status', 'mistake_tag',   'centre', 'quantity', 'goods_name', 'goods_id',
                      'vwarehouse', 'warehouse',   'va_stockin',
-                    'ori_department', 'ori_vwarehouse', 'order_category', 'memorandum', ]
-    list_filter = ['order_status', 'mistake_tag', 'order_category', 'department__name', 'ori_department__name', 'ori_vwarehouse__warehouse_name', 'vwarehouse__warehouse_name', 'warehouse__warehouse_name','goods_name__goods_name', 'goods_id',]
+                    'ori_centre', 'ori_vwarehouse', 'order_category', 'memorandum', ]
+    list_filter = ['order_status', 'mistake_tag', 'order_category', 'centre__name', 'ori_centre__name', 'ori_vwarehouse__warehouse_name', 'vwarehouse__warehouse_name', 'warehouse__warehouse_name','goods_name__goods_name', 'goods_id',]
     search_fields = ['order_id', 'goods_id']
     actions = [VASICheckAction, RejectSelectedAction]
     list_editable = ['memorandum', 'quantity']
-    readonly_fields = ['va_stockin', 'order_id', 'order_category', 'ori_department','ori_vwarehouse', 'department', 'goods_id',
+    readonly_fields = ['va_stockin', 'order_id', 'order_category', 'ori_centre','ori_vwarehouse', 'centre', 'goods_id',
                        'goods_name',  'warehouse', 'vwarehouse', 'order_status', 'mistake_tag']
     form_layout = [
         Fieldset('主要信息',
-                  'order_id', 'goods_name', 'order_category',  'quantity', 'ori_department', 'ori_vwarehouse', 'warehouse', 'vwarehouse', 'department'),
+                  'order_id', 'goods_name', 'order_category',  'quantity', 'ori_centre', 'ori_vwarehouse', 'warehouse', 'vwarehouse', 'centre'),
         Fieldset('一般信息',
                  'memorandum'),
         Fieldset(None,
@@ -426,7 +426,7 @@ class VASICheckAdmin(object):
     def handle_upload_file(self, _file):
         INIT_FIELDS_DIC = {
             '单据类型': 'order_category',
-            '目的部门': 'department',
+            '目的中心': 'centre',
             '入库数量': 'quantity',
             '关联入库单': 'va_stockin',
         }
@@ -436,7 +436,7 @@ class VASICheckAdmin(object):
         if '.' in _file.name and _file.name.rsplit('.')[-1] in ALLOWED_EXTENSIONS:
             with pd.ExcelFile(_file) as xls:
                 df = pd.read_excel(xls, sheet_name=0)
-                FILTER_FIELDS = ['单据类型',  '目的部门', '入库数量', '关联入库单']
+                FILTER_FIELDS = ['单据类型',  '目的中心', '入库数量', '关联入库单']
                 try:
                     df = df[FILTER_FIELDS]
                 except Exception as e:
@@ -534,15 +534,15 @@ class VASICheckAdmin(object):
             order_id = prefix + str(serial_number) + str(suffix)
             order.order_id = order_id
 
-            _q_department = DepartmentInfo.objects.filter(name=row['department'])
-            if _q_department.exists():
-                department = _q_department[0]
+            _q_centre = CentreInfo.objects.filter(name=row['centre'])
+            if _q_centre.exists():
+                centre = _q_centre[0]
             else:
                 report_dic["false"] += 1
-                report_dic["error"].append('不存在此部门：%s' % row['department'])
+                report_dic["error"].append('不存在此部门：%s' % row['centre'])
                 continue
 
-            _q_dept_warehouse = DeptToVW.objects.filter(department=department)
+            _q_dept_warehouse = DeptToVW.objects.filter(centre=centre)
             if _q_dept_warehouse.exists():
                 vwarehouse = _q_dept_warehouse[0].warehouse
             else:
@@ -550,7 +550,7 @@ class VASICheckAdmin(object):
                 report_dic["error"].append('部门不存在部门仓：%s，此案创建部门仓再操作！' % row['department'])
                 continue
 
-            order.department = department
+            order.centre = centre
             order.vwarehouse = vwarehouse
             order.quantity = row['quantity']
 
@@ -564,7 +564,7 @@ class VASICheckAdmin(object):
 
             order.goods_name = va_stockin.goods_name
             order.goods_id = va_stockin.goods_id
-            order.ori_department = va_stockin.department
+            order.ori_centre = va_stockin.centre
             order.warehouse = va_stockin.warehouse
             order.ori_vwarehouse = va_stockin.vwarehouse
             order.va_stockin = va_stockin
@@ -622,18 +622,18 @@ class VASIHandleAction(BaseActionView):
 
 # 本部门虚拟入库列表
 class VASIMineAdmin(object):
-    list_display = ['order_id', 'order_status', 'mistake_tag', 'order_category', 'ori_department', 'ori_vwarehouse',
-                    'vwarehouse', 'warehouse', 'goods_name', 'goods_id', 'quantity', 'department', 'va_stockin',
+    list_display = ['order_id', 'order_status', 'mistake_tag', 'order_category', 'ori_centre', 'ori_vwarehouse',
+                    'vwarehouse', 'warehouse', 'goods_name', 'goods_id', 'quantity', 'centre', 'va_stockin',
                     'memorandum', ]
-    list_filter = ['order_status', 'mistake_tag', 'order_category', 'department__name', 'ori_department__name', 'ori_vwarehouse__warehouse_name', 'vwarehouse__warehouse_name', 'warehouse__warehouse_name','goods_name__goods_name', 'goods_id',]
+    list_filter = ['order_status', 'mistake_tag', 'order_category', 'centre__name', 'ori_centre__name', 'ori_vwarehouse__warehouse_name', 'vwarehouse__warehouse_name', 'warehouse__warehouse_name','goods_name__goods_name', 'goods_id',]
     search_fields = ['order_id', 'goods_id']
     actions = [VASIHandleAction, ]
     list_editable = ['memorandum']
-    readonly_fields = ['va_stockin', 'order_id', 'order_category', 'ori_department','ori_vwarehouse', 'department', 'goods_id',
+    readonly_fields = ['va_stockin', 'order_id', 'order_category', 'ori_centre','ori_vwarehouse', 'centre', 'goods_id',
                        'goods_name', 'quantity', 'warehouse', 'vwarehouse', 'order_status', 'mistake_tag']
     form_layout = [
         Fieldset('主要信息',
-                  'order_id', 'goods_name', 'order_category',  'quantity', 'ori_department', 'ori_vwarehouse', 'warehouse', 'vwarehouse', 'department'),
+                  'order_id', 'goods_name', 'order_category',  'quantity', 'ori_centre', 'ori_vwarehouse', 'warehouse', 'vwarehouse', 'centre'),
         Fieldset('一般信息',
                  'memorandum'),
         Fieldset(None,
@@ -642,7 +642,7 @@ class VASIMineAdmin(object):
 
     def queryset(self):
         queryset = super(VASIMineAdmin, self).queryset()
-        queryset = queryset.filter(is_delete=0, order_status=2, department=self.request.user.department)
+        queryset = queryset.filter(is_delete=0, order_status=2, centre=self.request.user.department.centre)
         return queryset
 
     def has_add_permission(self):
@@ -651,17 +651,17 @@ class VASIMineAdmin(object):
 
 
 class VAllotSIInfoAdmin(object):
-    list_display = ['order_id', 'order_status', 'mistake_tag', 'order_category', 'ori_department',
-                    'ori_vwarehouse', 'vwarehouse', 'warehouse', 'goods_name', 'goods_id', 'quantity', 'department',
+    list_display = ['order_id', 'order_status', 'mistake_tag', 'order_category', 'ori_centre',
+                    'ori_vwarehouse', 'vwarehouse', 'warehouse', 'goods_name', 'goods_id', 'quantity', 'centre',
                     'memorandum', ]
-    list_filter = ['order_status', 'mistake_tag', 'order_category', 'department__name', 'ori_department__name', 'ori_vwarehouse__warehouse_name', 'vwarehouse__warehouse_name', 'warehouse__warehouse_name','goods_name__goods_name', 'goods_id',]
+    list_filter = ['order_status', 'mistake_tag', 'order_category', 'centre__name', 'ori_centre__name', 'ori_vwarehouse__warehouse_name', 'vwarehouse__warehouse_name', 'warehouse__warehouse_name','goods_name__goods_name', 'goods_id',]
     search_fields = ['order_id', 'goods_id']
     actions = [VASICheckAction, ]
-    readonly_fields = ['va_stockin', 'order_id', 'order_category', 'ori_department','ori_vwarehouse', 'department', 'goods_id',
+    readonly_fields = ['va_stockin', 'order_id', 'order_category', 'ori_centre','ori_vwarehouse', 'centre', 'goods_id',
                        'goods_name', 'quantity', 'warehouse', 'vwarehouse', 'order_status', 'mistake_tag']
     form_layout = [
         Fieldset('主要信息',
-                  'order_id', 'goods_name', 'order_category',  'quantity', 'ori_department', 'ori_vwarehouse', 'warehouse', 'vwarehouse', 'department'),
+                  'order_id', 'goods_name', 'order_category',  'quantity', 'ori_centre', 'ori_vwarehouse', 'warehouse', 'vwarehouse', 'centre'),
         Fieldset('一般信息',
                  'memorandum'),
         Fieldset(None,

@@ -16,12 +16,17 @@ class WarehouseInfo(BaseModel):
         (0, '停用'),
         (1, '正常'),
     )
+    ATTRIBUTE = (
+        (0, '自有本仓'),
+        (1, '自有外仓'),
+        (2, '寄售仓'),
+        (3, '直营仓'),
+    )
     CATEGORY = (
         (0, '普通仓库'),
-        (1, '工厂仓库'),
-        (2, '残品仓库'),
-        (3, '退货仓库'),
+        (1, '第三方仓储'),
     )
+
     warehouse_name = models.CharField(unique=True, max_length=60, verbose_name='仓库名称')
     warehouse_id = models.CharField(unique=True, max_length=20, verbose_name='仓库ID')
     nation = models.CharField(null=True, blank=True, max_length=50, verbose_name='国别')
@@ -32,7 +37,9 @@ class WarehouseInfo(BaseModel):
     mobile = models.CharField(null=True, blank=True, max_length=30, verbose_name='电话')
     address = models.CharField(null=True, blank=True, max_length=90, verbose_name='地址')
     memorandum = models.CharField(null=True, blank=True, max_length=90, verbose_name='地址')
+    attribute = models.SmallIntegerField(choices=ATTRIBUTE, default=0, verbose_name='仓库属性')
     category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='仓库类型')
+
     order_status = models.SmallIntegerField(choices=STATUS, default=1, verbose_name='仓库状态')
 
     class Meta:
@@ -45,28 +52,13 @@ class WarehouseInfo(BaseModel):
 
     @classmethod
     def verify_mandatory(cls, columns_key):
-        VERIFY_FIELD = ['warehouse_id', 'warehouse_name']
+        VERIFY_FIELD = ['warehouse_id', 'warehouse_name', 'attribute', 'category']
 
         for i in VERIFY_FIELD:
             if i not in columns_key:
                 return 'verify_field error, must have mandatory field: "{}""'.format(i)
         else:
             return None
-
-
-class WarehouseGeneral(WarehouseInfo):
-
-    class Meta:
-        verbose_name = 'BASE-仓库-普通仓库'
-        verbose_name_plural = verbose_name
-        proxy = True
-
-
-class WarehouseManu(WarehouseInfo):
-    class Meta:
-        verbose_name = 'BASE-仓库-工厂仓库'
-        verbose_name_plural = verbose_name
-        proxy = True
 
 
 class WarehouseVirtual(BaseModel):

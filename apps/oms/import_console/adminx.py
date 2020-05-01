@@ -24,10 +24,9 @@ from .models import OriNSSOUnhandle, OriNSStockout, OriNPSIUnhandle, OriNPStockI
 from .models import OriPRUnhandle, OriPurRefund, OriALUnhandle, OriAllocation, OriSUUnhandle, OriSurplus, OriLOUnhandle, OirLoss
 
 from apps.oms.convert_console.models import CovertSI, CovertSO, CovertLoss
-from apps.base.warehouse.models import WarehouseGeneral
+from apps.base.warehouse.models import WarehouseInfo
 from apps.base.goods.models import GoodsInfo
-# from apps.oms.purchase.models import PurchaseInfo
-from apps.base.company.models import ManuInfo, CompanyInfo
+from apps.base.company.models import ManuInfo
 from apps.base.department.models import DepartmentInfo
 
 ACTION_CHECKBOX_NAME = '_selected_action'
@@ -494,16 +493,6 @@ class OriSIAction(BaseActionView):
                         continue
                     order = CovertSI()
                     order.order_id = order_id
-                    supplier = obj.supplier
-                    _q_supplier = CompanyInfo.objects.filter(company_name=supplier)
-                    if _q_supplier.exists():
-                        order.supplier = _q_supplier[0]
-                    else:
-                        self.message_user("单号%s供货商非法，查看系统是否有此供货商" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 2
-                        obj.save()
-                        continue
                     department = obj.department
                     _q_department = DepartmentInfo.objects.filter(name=department)
                     if _q_department.exists():
@@ -525,7 +514,7 @@ class OriSIAction(BaseActionView):
                         obj.save()
                         continue
                     warehouse = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    _q_warehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -537,7 +526,7 @@ class OriSIAction(BaseActionView):
                     order.order_category = order.department.category
                     order.origin_order_category = obj.order_category
                     order.origin_order_id = obj.order_id
-                    fields_list = ['order_creator', 'create_date', 'seller',
+                    fields_list = ['order_creator', 'create_date', 'seller', 'supplier'
                                    'bs_category','ori_creator', 'payee', 'stockin_date',
                                    'purchaser', 'goods_id', 'quantity_receivable', 'quantity_received', 'batch_number',
                                    'expiry_date', 'produce_date', 'memorandum', 'price', ]
@@ -567,11 +556,11 @@ class OriSIAction(BaseActionView):
 # #####未递交原始采购入库单#####
 class OriStockInUnhandleAdmin(object):
 
-    list_display = ['detail_num', 'order_id', 'mistake_tag',  'department', 'supplier', 'stockin_date', 'goods_id',
+    list_display = ['detail_num', 'order_id', 'mistake_tag',  'department', 'stockin_date', 'goods_id',
                     'goods_name', 'goods_size', 'quantity_received', 'price', 'batch_number', 'warehouse',
                     'storage', 'expiry_date', 'produce_date', 'purchase_order_id', 'multiple', 'ori_creator']
 
-    list_filter = ['mistake_tag', 'order_status', 'ori_creator', 'supplier', 'create_date', 'department',
+    list_filter = ['mistake_tag', 'order_status', 'ori_creator', 'create_date', 'department',
                    'seller', 'bs_category', 'payee', 'stockin_date', 'ori_creator',
                    'purchaser', 'goods_id', 'goods_name', 'quantity_received', 'price',
                    'batch_number', 'warehouse', 'expiry_date', 'produce_date', 'purchase_order_id', 'multiple']
@@ -834,7 +823,7 @@ class OriSOAction(BaseActionView):
                         obj.save()
                         continue
                     warehouse = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    _q_warehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -1126,7 +1115,7 @@ class OriNSSOAction(BaseActionView):
                         obj.save()
                         continue
                     warehouse = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    _q_warehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -1402,18 +1391,8 @@ class OriNPSIAction(BaseActionView):
                         continue
                     order = CovertSI()
                     order.order_id = order_id
-                    supplier = obj.owner
-                    order.payee = supplier
-                    order.purchaser = supplier
-                    _q_supplier = CompanyInfo.objects.filter(company_name=supplier)
-                    if _q_supplier.exists():
-                        order.supplier = _q_supplier[0]
-                    else:
-                        self.message_user("单号%s供货商非法，查看系统是否有此供货商" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 2
-                        obj.save()
-                        continue
+                    order.payee = obj.owner
+                    order.purchaser = obj.owner
                     department = obj.department
                     _q_department = DepartmentInfo.objects.filter(name=department)
                     if _q_department.exists():
@@ -1435,7 +1414,7 @@ class OriNPSIAction(BaseActionView):
                         obj.save()
                         continue
                     warehouse = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    _q_warehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -1448,7 +1427,7 @@ class OriNPSIAction(BaseActionView):
                     if len(str(order.memorandum)) > 300:
                         order.memorandum = order.memorandum[:300]
                     order.price = 0
-
+                    order.supplier = obj.owner
                     order.quantity_received = obj.quantity
                     order.quantity_receivable = obj.quantity
                     order.order_category = order.department.category
@@ -1718,15 +1697,8 @@ class OriRefundAction(BaseActionView):
                     supplier = '退货中心'
                     order.payee = supplier
                     order.purchaser = supplier
-                    _q_supplier = CompanyInfo.objects.filter(company_name=supplier)
-                    if _q_supplier.exists():
-                        order.supplier = _q_supplier[0]
-                    else:
-                        self.message_user("单号%s供货商非法，查看系统是否有此供货商" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 2
-                        obj.save()
-                        continue
+                    order.supplier = supplier
+
                     department = obj.department
                     _q_department = DepartmentInfo.objects.filter(name=department)
                     if _q_department.exists():
@@ -1748,7 +1720,7 @@ class OriRefundAction(BaseActionView):
                         obj.save()
                         continue
                     warehouse = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    _q_warehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -2066,7 +2038,7 @@ class OriPRAction(BaseActionView):
                         obj.save()
                         continue
                     warehouse = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    _q_warehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -2328,16 +2300,6 @@ class OriAllocationAction(BaseActionView):
                     self.log('change', '', obj)
                     si_order_id = '{0}-{1}-I'.format(str(obj.order_id), str(obj.detail_num))
                     so_order_id = '{0}-{1}-O'.format(str(obj.order_id), str(obj.detail_num))
-                    supplier = obj.trans_out
-                    _q_supplier = CompanyInfo.objects.filter(company_name=supplier)
-                    if _q_supplier.exists():
-                        obj_supplier = _q_supplier[0]
-                    else:
-                        self.message_user("单号%s供货商非法，查看系统是否有此供货商" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 2
-                        obj.save()
-                        continue
                     department = obj.department
                     _q_department = DepartmentInfo.objects.filter(name=department)
                     if _q_department.exists():
@@ -2366,14 +2328,14 @@ class OriAllocationAction(BaseActionView):
                     else:
                         si_order = CovertSI()
                         si_order.order_id = si_order_id
-                        si_order.payee = supplier
-                        si_order.purchaser = supplier
-                        si_order.supplier = obj_supplier
+                        si_order.payee = obj.trans_out
+                        si_order.purchaser = obj.trans_out
+                        si_order.supplier = obj.trans_out
                         si_order.department = si_department
                         si_order.goods_name = goods_name
 
                         si_warehouse = obj.warehouse_in
-                        _q_si_warehouse = WarehouseGeneral.objects.filter(warehouse_name=si_warehouse)
+                        _q_si_warehouse = WarehouseInfo.objects.filter(warehouse_name=si_warehouse)
                         if _q_si_warehouse.exists():
                             si_order.warehouse = _q_si_warehouse[0]
                         else:
@@ -2422,12 +2384,12 @@ class OriAllocationAction(BaseActionView):
                     else:
                         so_order = CovertSO()
                         so_order.order_id = so_order_id
-                        so_order.customer = obj_supplier.company_name
+                        so_order.customer = obj.trans_out
                         so_order.department = DepartmentInfo.objects.filter(name='物流部')[0]
                         so_order.goods_name = goods_name
 
                         so_warehouse = obj.warehouse_out
-                        _q_so_warehouse = WarehouseGeneral.objects.filter(warehouse_name=so_warehouse)
+                        _q_so_warehouse = WarehouseInfo.objects.filter(warehouse_name=so_warehouse)
                         if _q_so_warehouse.exists():
                             so_order.warehouse = _q_so_warehouse[0]
                         else:
@@ -2730,17 +2692,9 @@ class OriSUAction(BaseActionView):
                     order = CovertSI()
                     order.order_id = order_id
                     supplier = obj.owner
-                    order.payee = supplier
-                    order.purchaser = supplier
-                    _q_supplier = CompanyInfo.objects.filter(company_name=supplier)
-                    if _q_supplier.exists():
-                        order.supplier = _q_supplier[0]
-                    else:
-                        self.message_user("单号%s供货商非法，查看系统是否有此供货商" % obj.order_id, "error")
-                        n -= 1
-                        obj.mistake_tag = 2
-                        obj.save()
-                        continue
+                    order.payee = obj.owner
+                    order.purchaser = obj.owner
+                    order.supplier = obj.owner
 
                     _q_department = DepartmentInfo.objects.filter(name='物流部')
                     if _q_department.exists():
@@ -2762,7 +2716,7 @@ class OriSUAction(BaseActionView):
                         obj.save()
                         continue
                     warehouse = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    _q_warehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:
@@ -3058,7 +3012,7 @@ class OriLOAction(BaseActionView):
                         obj.save()
                         continue
                     warehouse = obj.warehouse
-                    _q_warehouse = WarehouseGeneral.objects.filter(warehouse_name=warehouse)
+                    _q_warehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse)
                     if _q_warehouse.exists():
                         order.warehouse = _q_warehouse[0]
                     else:

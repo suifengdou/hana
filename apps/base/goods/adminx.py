@@ -22,7 +22,7 @@ from xadmin.views.base import filter_hook
 from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 
-from .models import SeriesInfo, SizeInfo, OPackagesInfo, IPackagesInfo, BarCodeInfo, GoodsInfo
+from .models import SeriesInfo, BarCodeInfo, GoodsInfo
 from apps.base.company.models import ManuInfo
 
 
@@ -122,66 +122,127 @@ class SeriesInfoAdmin(object):
                  'creator', 'is_delete', **{"style": "display:None"}),
     ]
     actions = [RejectSelectedAction]
+    import_data = True
 
-    def save_models(self):
-        obj = self.new_obj
-        request = self.request
-        obj.creator = request.user.username
-        obj.save()
-        super().save_models()
+    def post(self, request, *args, **kwargs):
 
+        file = request.FILES.get('file', None)
+        if file:
+            result = self.handle_upload_file(file)
+            if isinstance(result, int):
+                self.message_user('导入成功数据%s条' % result['successful'], 'success')
+                if result['false'] > 0:
+                    self.message_user('导入失败数据%s条,主要的错误是%s' % (result['false'], result['error']), 'warning')
+                if result['repeated'] > 0:
+                    self.message_user('包含更新重复数据%s条' % result['repeated'], 'error')
+            else:
+                self.message_user('结果提示：%s' % result)
+        return super(SeriesInfoAdmin, self).post(request, *args, **kwargs)
 
-class SizeInfoAdmin(object):
-    list_display = ['order_status', 's_name', 'unit', 'value', 'multiple', 'multiple_unit', 'memorandum', 'create_time', 'creator']
-    search_fields = ['s_name']
-    relfield_style = 'fk-ajax'
-    form_layout = [
-        Fieldset('必填信息',
-                 's_name', 'unit', 'value', 'multiple', 'multiple_unit', 'order_status'),
-        Fieldset(None,
-                 'creator', 'is_delete', **{"style": "display:None"}),
-    ]
-    actions = [RejectSelectedAction]
+    def handle_upload_file(self, _file):
+        INIT_FIELDS_DIC = {
+            '系列': 's_name',
+        }
+        ALLOWED_EXTENSIONS = ['xls', 'xlsx']
+        report_dic = {"successful": 0, "discard": 0, "false": 0, "repeated": 0, "error": []}
 
-    def save_models(self):
-        obj = self.new_obj
-        request = self.request
-        obj.creator = request.user.username
-        obj.save()
-        super().save_models()
+        if '.' in _file.name and _file.name.rsplit('.')[-1] in ALLOWED_EXTENSIONS:
+            with pd.ExcelFile(_file) as xls:
+                df = pd.read_excel(xls, sheet_name=0)
+                FILTER_FIELDS = ['系列']
 
+                try:
+                    df = df[FILTER_FIELDS]
+                except Exception as e:
+                    report_dic["error"].append(e)
+                    return report_dic
 
-class OPackagesInfoAdmin(object):
-    list_display = ['order_status', 'p_name', 'length', 'width', 'height', 'create_time', 'creator']
-    search_fields = ['p_name']
-    relfield_style = 'fk-ajax'
-    form_layout = [
-        Fieldset('必填信息',
-                 'p_name', 'length', 'width', 'height', 'order_status'),
-        Fieldset(None,
-                 'creator', 'is_delete', **{"style": "display:None"}),
-    ]
-    actions = [RejectSelectedAction]
+                # 获取表头，对表头进行转换成数据库字段名
+                columns_key = df.columns.values.tolist()
+                for i in range(len(columns_key)):
+                    columns_key[i] = columns_key[i].replace(' ', '').replace('=', '')
 
-    def save_models(self):
-        obj = self.new_obj
-        request = self.request
-        obj.creator = request.user.username
-        obj.save()
-        super().save_models()
+                for i in range(len(columns_key)):
+                    if INIT_FIELDS_DIC.get(columns_key[i], None) is not None:
+                        columns_key[i] = INIT_FIELDS_DIC.get(columns_key[i])
 
+                # 验证一下必要的核心字段是否存在
+                _ret_verify_field = SeriesInfo.verify_mandatory(columns_key)
+                if _ret_verify_field is not None:
+                    return _ret_verify_field
 
-class IPackagesInfoAdmin(object):
-    list_display = ['order_status', 'p_name', 'length', 'width', 'height', 'multiple', 'create_time', 'creator']
-    search_fields = ['p_name']
-    relfield_style = 'fk-ajax'
-    form_layout = [
-        Fieldset('必填信息',
-                 'p_name', 'length', 'width', 'height', 'multiple', 'order_status'),
-        Fieldset(None,
-                 'creator', 'is_delete', **{"style": "display:None"}),
-    ]
-    actions = [RejectSelectedAction]
+                # 更改一下DataFrame的表名称
+                columns_key_ori = df.columns.values.tolist()
+                ret_columns_key = dict(zip(columns_key_ori, columns_key))
+                df.rename(columns=ret_columns_key, inplace=True)
+
+                # 获取导入表格的字典，每一行一个字典。这个字典最后显示是个list
+                _ret_list = df.to_dict(orient='records')
+                intermediate_report_dic = self.save_resources(_ret_list)
+                for k, v in intermediate_report_dic.items():
+                    if k == "error":
+                        if intermediate_report_dic["error"]:
+                            report_dic[k].append(v)
+                    else:
+                        report_dic[k] += v
+                return report_dic
+
+        # 以下是csv处理逻辑，和上面的处理逻辑基本一致。
+        elif '.' in _file.name and _file.name.rsplit('.')[-1] == 'csv':
+            df = pd.read_csv(_file, encoding="GBK", chunksize=300)
+
+            for piece in df:
+                # 获取表头
+                columns_key = piece.columns.values.tolist()
+                # 剔除表头中特殊字符等于号和空格
+                for i in range(len(columns_key)):
+                    columns_key[i] = columns_key[i].replace(' ', '').replace('=', '')
+                # 循环处理对应的预先设置，转换成数据库字段名称
+                for i in range(len(columns_key)):
+                    if INIT_FIELDS_DIC.get(columns_key[i], None) is not None:
+                        columns_key[i] = INIT_FIELDS_DIC.get(columns_key[i])
+                # 直接调用验证函数进行验证
+                _ret_verify_field = SeriesInfo.verify_mandatory(columns_key)
+                if _ret_verify_field is not None:
+                    return _ret_verify_field
+                # 验证通过进行重新处理。
+                columns_key_ori = piece.columns.values.tolist()
+                ret_columns_key = dict(zip(columns_key_ori, columns_key))
+                piece.rename(columns=ret_columns_key, inplace=True)
+                _ret_list = piece.to_dict(orient='records')
+                intermediate_report_dic = self.save_resources(_ret_list)
+                for k, v in intermediate_report_dic.items():
+                    if k == "error":
+                        if intermediate_report_dic["error"]:
+                            report_dic[k].append(v)
+                    else:
+                        report_dic[k] += v
+            return report_dic
+
+        else:
+            return "只支持excel和csv文件格式！"
+
+    def save_resources(self, resource):
+        # 设置初始报告
+        report_dic = {"successful": 0, "discard": 0, "false": 0, "repeated": 0, "error": []}
+
+        # 开始导入数据
+        for row in resource:
+            # 判断表格尾部
+            order = SeriesInfo()  # 创建表格每一行为一个对象
+
+            s_name = str(row["s_name"])
+            s_name = s_name.replace('=', '').replace('"', '')
+            order.s_name = s_name
+            try:
+                order.creator = self.request.user.username
+                order.save()
+                report_dic["successful"] += 1
+            # 保存出错，直接错误条数计数加一。
+            except Exception as e:
+                report_dic["error"].append(e)
+                report_dic["false"] += 1
+        return report_dic
 
     def save_models(self):
         obj = self.new_obj
@@ -213,7 +274,7 @@ class BarCodeInfoAdmin(object):
 
 class GoodsInfoAdmin(object):
     list_display = ['order_status', 'manufactory', 'series', 'goods_name', 'goods_id', 'size', 'e_name', 'p_name', 'price',
-                    'package_unit', 'logistics_time', 'order_time', 'memorandum', 'create_time', 'creator']
+                    'package_unit', 'logistics_time', 'order_time', 'order_cycle', 'memorandum', 'create_time', 'creator']
     search_fields = ['goods_name', 'goods_id',]
     list_filter = ['manufactory__company_name', 'series__s_name', 'goods_id', 'e_name', 'p_name', 'order_time',]
     relfield_style = 'fk-ajax'
@@ -244,10 +305,17 @@ class GoodsInfoAdmin(object):
 
     def handle_upload_file(self, _file):
         INIT_FIELDS_DIC = {
-            '供应商': 'manufactory',
+            '系列': 'series',
             '物料编码': 'goods_id',
             '物料名称': 'goods_name',
+            '规格': 'size',
             '含税单价': 'price',
+            '装箱规格': 'package_unit',
+            '保质期': 'shelf_life',
+            '物流周期': 'logistics_time',
+            '订货周期': 'order_time',
+            '起订量': 'moq',
+
         }
         ALLOWED_EXTENSIONS = ['xls', 'xlsx']
         report_dic = {"successful": 0, "discard": 0, "false": 0, "repeated": 0, "error": []}
@@ -255,7 +323,7 @@ class GoodsInfoAdmin(object):
         if '.' in _file.name and _file.name.rsplit('.')[-1] in ALLOWED_EXTENSIONS:
             with pd.ExcelFile(_file) as xls:
                 df = pd.read_excel(xls, sheet_name=0)
-                FILTER_FIELDS = ['供应商', '物料编码', '物料名称', '含税单价']
+                FILTER_FIELDS = ['系列', '物料编码', '物料名称', '规格', '含税单价', '装箱规格', '保质期', '物流周期', '订货周期', '起订量']
 
                 try:
                     df = df[FILTER_FIELDS]
@@ -341,21 +409,23 @@ class GoodsInfoAdmin(object):
                     row[k] = v.replace('=', '').replace('"', '')
 
             goods_id = str(row["goods_id"])
-            manufactory = str(row['manufactory'])
-            manufactory = ManuInfo.objects.filter(company_name=manufactory)
-            if manufactory.exists():
-                row['manufactory'] = manufactory[0]
-                order.manufactory_id = manufactory[0].id
-            else:
-                report_dic["false"] += 1
-                report_dic["error"].append('%s货品工厂错误或不存在' % goods_id)
-                continue
-            # 如果订单号查询，已经存在，丢弃订单，计数为重复订单
+
+            # 如果查询已经存在，丢弃订单，计数为重复订单
             if GoodsInfo.objects.filter(goods_id=goods_id).exists():
                 report_dic["repeated"] += 1
                 report_dic["error"].append('%s单据重复导入' % goods_id)
                 continue
-
+            _q_series = SeriesInfo.objects.filter(s_name=row['series'])
+            if _q_series.exists():
+                row['series'] = _q_series[0]
+                order.series_id = _q_series[0].id
+            else:
+                series_order = SeriesInfo()
+                series_order.s_name = row['series']
+                series_order.save()
+                report_dic["error"].append('新建了系列：%s' % row['series'])
+                row['series'] = series_order
+                order.series_id = series_order.id
             for k, v in row.items():
                 # 查询是否有这个字段属性，如果有就更新到对象。nan, NaT 是pandas处理数据时候生成的。
                 if hasattr(order, k):
@@ -382,8 +452,5 @@ class GoodsInfoAdmin(object):
 
 
 xadmin.site.register(SeriesInfo, SeriesInfoAdmin)
-xadmin.site.register(SizeInfo, SizeInfoAdmin)
-xadmin.site.register(OPackagesInfo, OPackagesInfoAdmin)
-xadmin.site.register(IPackagesInfo, IPackagesInfoAdmin)
 xadmin.site.register(BarCodeInfo, BarCodeInfoAdmin)
 xadmin.site.register(GoodsInfo, GoodsInfoAdmin)

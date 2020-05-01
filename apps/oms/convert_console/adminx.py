@@ -26,7 +26,7 @@ from .models import CovertSI, CovertSIUnhandle, CovertSO, CovertSOUnhandle, Stoc
 from apps.base.warehouse.models import WarehouseVirtual, WarehouseInfo
 from apps.base.relationship.models import DeptToVW, DeptToW
 from apps.wms.stock.models import StockInfo, DeptStockInfo
-from apps.base.department.models import DepartmentInfo
+from apps.base.department.models import  CentreInfo
 
 ACTION_CHECKBOX_NAME = '_selected_action'
 
@@ -135,8 +135,8 @@ class CovertSIAction(BaseActionView):
             else:
                 for obj in queryset:
                     self.log('change', '', obj)
-                    department = obj.department
-                    _q_vwarehouse = DeptToVW.objects.filter(department=department)
+                    centre = obj.department.centre
+                    _q_vwarehouse = DeptToVW.objects.filter(centre=centre)
                     if _q_vwarehouse.exists():
                         vwarehouse = _q_vwarehouse[0].warehouse
                     else:
@@ -153,6 +153,8 @@ class CovertSIAction(BaseActionView):
                         check_quantity = CovertSI.objects.filter(order_status=2, warehouse=obj.warehouse,
                                                                  goods_name=obj.goods_name).aggregate(
                                                                 Sum('quantity_linking'))['quantity_linking__sum']
+                        if check_quantity is None:
+                            check_quantity = 0
                         check_quantity = check_quantity + obj.quantity_received
                         if check_quantity != current_stock.quantity:
                             self.message_user("单号%s不要重复点递交，多线程递交会造成程序错乱" % obj.order_id, "error")
@@ -171,7 +173,7 @@ class CovertSIAction(BaseActionView):
                                 obj.mistake_tag = 3
                                 obj.save()
                                 continue
-                            _q_stock_virtual = DeptStockInfo.objects.filter(department=obj.department,
+                            _q_stock_virtual = DeptStockInfo.objects.filter(centre=obj.department.centre,
                                                                             goods_name=obj.goods_name,
                                                                             warehouse=obj.warehouse,
                                                                             vwarehouse=vwarehouse)
@@ -224,7 +226,7 @@ class CovertSIAction(BaseActionView):
                         else:
                             stock.undistributed = 0
 
-                        stock_virtual.department = obj.department
+                        stock_virtual.centre = obj.department.centre
                         stock_virtual.vwarehouse = vwarehouse
                         stock_virtual.quantity = obj.quantity_received
                         try:
@@ -257,16 +259,86 @@ class CovertSIAction(BaseActionView):
         return None
 
 
+# 修复虚拟仓保存失败入
+class FixVWAction(BaseActionView):
+        action_name = "fixvw_covert_si"
+        description = "修复选中的订单"
+        model_perm = 'change'
+        icon = "fa fa-check-square-o"
+
+        modify_models_batch = False
+
+        @filter_hook
+        def do_action(self, queryset):
+            if not self.has_change_permission():
+                raise PermissionDenied
+            n = queryset.count()
+            if n:
+                if self.modify_models_batch:
+                    self.log('change',
+                             '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                    queryset.update(status=2)
+                else:
+                    for obj in queryset:
+                        centre = obj.department.centre
+                        _q_vwarehouse = DeptToVW.objects.filter(centre=centre)
+                        if _q_vwarehouse.exists():
+                            vwarehouse = _q_vwarehouse[0].warehouse
+                        else:
+                            self.message_user("单号%s部门没有映射部门仓库，请设置对应仓库" % obj.order_id, "error")
+                            n -= 1
+                            obj.mistake_tag = 1
+                            obj.save()
+                            continue
+
+                        if obj.mistake_tag == 4:
+                            self.log('change', '', obj)
+
+                            stock_virtual = DeptStockInfo()
+
+                            fields_list = ['goods_name', 'goods_id', 'warehouse']
+
+                            for k in fields_list:
+                                if hasattr(obj, k):
+                                    setattr(stock_virtual, k, getattr(obj, k))  # 更新对象属性对应键值
+
+                            stock_virtual.centre = obj.department.centre
+                            stock_virtual.vwarehouse = vwarehouse
+                            stock_virtual.quantity = obj.quantity_received
+                            try:
+                                stock_virtual.creator = self.request.user.username
+                                stock_virtual.save()
+                            except Exception as e:
+                                self.message_user("单号%s部门仓实例保存失败, 错误：%s" % (obj.order_id, e), "error")
+                                n -= 1
+                                obj.mistake_tag = 4
+                                obj.save()
+                                continue
+                            obj.order_status = 2
+                            obj.quantity_linking = obj.quantity_received
+                            obj.mistake_tag = 0
+                            obj.save()
+                        else:
+                            self.message_user("只有虚拟库存保存失败才可以修复", "error")
+                            n -= 1
+                            continue
+
+                self.message_user("成功修复 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                                  'success')
+
+            return None
+
+
 # #####未审核入库调整单#####
 class CovertSIUnhandleAdmin(object):
     list_display = ['order_id', 'mistake_tag', 'order_status', 'order_category', 'origin_order_category', 'supplier',
                     'department', 'goods_id','goods_name', 'quantity_receivable', 'quantity_received', 'payee',
                     'warehouse', 'origin_order_id',  'ori_creator',  'stockin_date', 'purchaser',
                     'batch_number',  'expiry_date', 'produce_date', 'memorandum', 'price', 'quantity_linking']
-    list_filter = ['order_category', 'department__name', 'create_date', 'supplier__company_name', 'stockin_date',
+    list_filter = ['order_category', 'department__name', 'create_date', 'stockin_date',
                    'goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name']
     search_fields = ['order_id']
-    actions = [CovertSIAction, ]
+    actions = [CovertSIAction, FixVWAction]
 
     def queryset(self):
         queryset = super(CovertSIUnhandleAdmin, self).queryset()
@@ -284,7 +356,7 @@ class CovertSIAdmin(object):
                     'department', 'goods_id','goods_name', 'quantity_receivable', 'quantity_received', 'payee',
                     'warehouse', 'origin_order_id',  'ori_creator',  'stockin_date', 'purchaser',
                     'batch_number',  'expiry_date', 'produce_date', 'memorandum', 'price', 'quantity_linking']
-    list_filter = ['order_category', 'department__name', 'create_date', 'supplier__company_name', 'stockin_date',
+    list_filter = ['order_category', 'department__name', 'create_date', 'stockin_date',
                    'goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name']
     search_fields = ['order_id']
 
@@ -465,12 +537,12 @@ class LOSetDeptAction(BaseActionView):
                          '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
                 queryset.update(status=2)
             else:
-                des_department = DepartmentInfo.objects.filter(name='物流部')[0]
+                des_department = CentreInfo.objects.filter(name='物流部')[0]
                 for obj in queryset:
                     self.log('change', '', obj)
                     _q_department = DeptToW.objects.filter(warehouse=obj.warehouse)
                     if _q_department.exists():
-                        obj.des_department = _q_department[0].department
+                        obj.des_department = _q_department[0].centre
                         obj.order_category = obj.des_department.category
                     else:
                         obj.des_department = des_department
@@ -501,7 +573,7 @@ class LOSetFirstAction(BaseActionView):
                          '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
                 queryset.update(status=2)
             else:
-                des_department = DepartmentInfo.objects.filter(name='物流部')[0]
+                des_department = CentreInfo.objects.filter(name='物流部')[0]
                 i = 0
                 for obj in queryset:
                     self.log('change', '', obj)

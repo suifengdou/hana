@@ -123,7 +123,7 @@ class LogisticsInfoAdmin(object):
 
 
 class ManuInfoAdmin(object):
-    list_display = ['company_name', 'company', 'tax_fil_number', 'order_status', 'category', 'create_time', 'creator']
+    list_display = ['company_name', 'company_id', 'tax_fil_number', 'order_status', 'category', 'create_time', 'creator']
     relfield_style = 'fk-ajax'
 
     def queryset(self):
@@ -137,7 +137,7 @@ class ManuInfoAdmin(object):
 
 
 class WareInfoAdmin(object):
-    list_display = ['company_name', 'company', 'tax_fil_number', 'order_status', 'category', 'create_time', 'creator']
+    list_display = ['company_name', 'company_id', 'tax_fil_number', 'order_status', 'category', 'create_time', 'creator']
     relfield_style = 'fk-ajax'
 
     def queryset(self):
@@ -151,7 +151,7 @@ class WareInfoAdmin(object):
 
 
 class MineInfoAdmin(object):
-    list_display = ['company_name', 'company', 'tax_fil_number', 'order_status', 'category', 'create_time', 'creator']
+    list_display = ['company_name', 'company_id', 'tax_fil_number', 'order_status', 'category', 'create_time', 'creator']
     relfield_style = 'fk-ajax'
 
     def queryset(self):
@@ -166,7 +166,7 @@ class MineInfoAdmin(object):
 
 
 class CompanyInfoAdmin(object):
-    list_display = ['company_name', 'company', 'tax_fil_number', 'order_status', 'category', 'create_time', 'creator']
+    list_display = ['company_name', 'company_id', 'tax_fil_number', 'order_status', 'category', 'create_time', 'creator']
     list_filter = ['category']
     search_fields = ['company_name']
     form_layout = [

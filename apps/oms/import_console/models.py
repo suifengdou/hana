@@ -98,7 +98,7 @@ class OriStockInInfo(BaseModel):
     detail_num = models.CharField(max_length=20, verbose_name='明细信息行号')
     order_category = models.CharField(max_length=60, verbose_name='单据类型')
     ori_creator = models.CharField(max_length=60, verbose_name='创建人')
-    supplier = models.CharField(max_length=60, verbose_name='供货方')
+    supplier = models.CharField(max_length=60, null=True, blank=True, verbose_name='供货方')
     create_date = models.DateTimeField(max_length=60, verbose_name='创建日期')
     seller = models.CharField(max_length=60, verbose_name='结算方')
     bs_category = models.CharField(max_length=60, verbose_name='业务类型')

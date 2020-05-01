@@ -30,6 +30,7 @@ class CompanyInfo(BaseModel):
     tax_fil_number = models.CharField(unique=True, null=True, blank=True, max_length=30, verbose_name='税号')
     order_status = models.IntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
     category = models.IntegerField(choices=CATEGORY, default=1, verbose_name='公司类型')
+    company_id = models.CharField(null=True, blank=True, max_length=60, verbose_name='公司ID')
 
     class Meta:
         verbose_name = 'BASE-公司-公司管理'

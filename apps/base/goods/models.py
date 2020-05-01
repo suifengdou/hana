@@ -27,68 +27,15 @@ class SeriesInfo(BaseModel):
     def __str__(self):
         return self.s_name
 
+    @classmethod
+    def verify_mandatory(cls, columns_key):
+        VERIFY_FIELD = ['s_name']
 
-class SizeInfo(BaseModel):
-    ORDER_STATUS = (
-        (0, '取消'),
-        (1, '正常'),
-    )
-    s_name = models.CharField(unique=True, max_length=50, verbose_name='规格名称')
-    unit = models.CharField(max_length=50, verbose_name='度量单位')
-    value = models.IntegerField(verbose_name='数值')
-    multiple = models.IntegerField(verbose_name='最小包装数量')
-    multiple_unit = models.CharField(max_length=50, null=True, blank=True, verbose_name='倍数单位')
-    memorandum = models.CharField(null=True, blank=True, max_length=100, verbose_name='备注')
-    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='规格状态')
-
-    class Meta:
-        verbose_name = 'B-产品-规格'
-        verbose_name_plural = verbose_name
-        db_table = 'base_goods_size'
-
-    def __str__(self):
-        return self.s_name
-
-
-class OPackagesInfo(BaseModel):
-    ORDER_STATUS = (
-        (0, '取消'),
-        (1, '正常'),
-    )
-    p_name = models.CharField(unique=True, max_length=50, verbose_name='装箱外箱名称')
-    length = models.IntegerField(verbose_name='长')
-    width = models.IntegerField(verbose_name='宽')
-    height = models.IntegerField(verbose_name='高')
-    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='外箱状态')
-
-    class Meta:
-        verbose_name = 'B-产品-装箱外箱'
-        verbose_name_plural = verbose_name
-        db_table = 'base_goods_opackage'
-
-    def __str__(self):
-        return '{0}*{1}*{2}'.format(self.length, self.width, self.height)
-
-
-class IPackagesInfo(BaseModel):
-    ORDER_STATUS = (
-        (0, '取消'),
-        (1, '正常'),
-    )
-    p_name = models.CharField(unique=True, max_length=50, verbose_name='装箱内箱名称')
-    length = models.IntegerField(verbose_name='长')
-    width = models.IntegerField(verbose_name='宽')
-    height = models.IntegerField(verbose_name='高')
-    multiple = models.SmallIntegerField(verbose_name='包装倍数')
-    order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='内箱状态')
-
-    class Meta:
-        verbose_name = 'B-产品-装箱内箱'
-        verbose_name_plural = verbose_name
-        db_table = 'base_goods_ipackage'
-
-    def __str__(self):
-        return '{0}*{1}*{2}'.format(self.length, self.width, self.height)
+        for i in VERIFY_FIELD:
+            if i not in columns_key:
+                return 'verify_field error, must have mandatory field: "{}""'.format(i)
+        else:
+            return None
 
 
 class BarCodeInfo(BaseModel):
@@ -113,28 +60,22 @@ class GoodsInfo(BaseModel):
         (0, '取消'),
         (1, '正常'),
     )
-    CATEGORY = (
-        (0, '膜'),
-        (1, '水'),
-        (2, '液'),
-        (3, '霜'),
-        (4, '膏'),
-        (5, '粉'),
-    )
+
     goods_name = models.CharField(max_length=150, verbose_name='物料名称')
     goods_id = models.CharField(unique=True, max_length=150, verbose_name='物料编码', db_index=True)
-    size = models.ForeignKey(SizeInfo, on_delete=models.CASCADE, null=True, blank=True, verbose_name='规格')
-    manufactory = models.ForeignKey(ManuInfo, on_delete=models.CASCADE, verbose_name='供应商')
+    size = models.CharField(null=True, blank=True, max_length=150, verbose_name='规格')
+    manufactory = models.ForeignKey(ManuInfo, on_delete=models.CASCADE, null=True, blank=True, verbose_name='供应商')
     series = models.ForeignKey(SeriesInfo, null=True, blank=True, on_delete=models.CASCADE, verbose_name='系列')
-    category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='类型')
     e_name = models.CharField(max_length=200, null=True, blank=True, verbose_name='英文名')
     p_name = models.CharField(max_length=200, null=True, blank=True, verbose_name='产地名')
-    price = models.IntegerField(verbose_name='含税单价')
-    logistics_time = models.IntegerField(null=True, blank=True, verbose_name='物流周期（天）')
-    order_time = models.IntegerField(null=True, blank=True, verbose_name='订货周期（天）')
+    price = models.FloatField(verbose_name='含税单价')
+    package_unit = models.IntegerField(null=True, blank=True, verbose_name='装箱规格')
+    shelf_life = models.IntegerField(null=True, blank=True, verbose_name='保质期')
+    logistics_time = models.IntegerField(null=True, blank=True, verbose_name='物流周期')
+    order_time = models.IntegerField(null=True, blank=True, verbose_name='订货周期')
+    moq = models.IntegerField(null=True, blank=True, verbose_name='起订量')
     memorandum = models.CharField(max_length=360, null=True, blank=True, verbose_name='备注')
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='货品状态')
-    package_unit = models.IntegerField(null=True, blank=True, verbose_name='装箱规格')
 
     class Meta:
         verbose_name = 'B-产品-货品'
@@ -144,9 +85,20 @@ class GoodsInfo(BaseModel):
     def __str__(self):
         return '{0}'.format(self.goods_name)
 
+    def order_cycle(self):
+        try:
+            order_cycle_month = int(self.order_time)/30
+        except Exception as e:
+            order_cycle_month = 0
+        finally:
+            order_cycle_month = '%.2f 月' % order_cycle_month
+        return order_cycle_month
+
+    order_cycle.short_description = '订货周期（月）'
+
     @classmethod
     def verify_mandatory(cls, columns_key):
-        VERIFY_FIELD = ['manufactory', 'goods_id', 'goods_name', 'price']
+        VERIFY_FIELD = ['series', 'goods_id', 'goods_name', 'size', 'price', 'package_unit', 'shelf_life', 'logistics_time', 'order_time', 'moq']
 
         for i in VERIFY_FIELD:
             if i not in columns_key:

@@ -24,7 +24,7 @@ from xadmin.util import model_ngettext
 from xadmin.layout import Fieldset
 from xadmin.views.edit import ModelFormAdminView
 
-from .models import DepartmentInfo, MyDepartment
+from .models import DepartmentInfo, CentreInfo
 
 
 ACTION_CHECKBOX_NAME = '_selected_action'
@@ -33,7 +33,7 @@ ACTION_CHECKBOX_NAME = '_selected_action'
 class RejectSelectedAction(BaseActionView):
 
     action_name = "reject_selected"
-    description = '驳回选中的工单'
+    description = '停用选中的部门'
 
     delete_confirmation_template = None
     delete_selected_confirmation_template = None
@@ -57,7 +57,7 @@ class RejectSelectedAction(BaseActionView):
                         self.message_user("%s 驳回上一级成功" % obj.express_id, "success")
                 else:
                     n -= 1
-                    self.message_user("%s 公司状态错误，请检查，取消出错。" % obj.express_id, "error")
+                    self.message_user("%s 部门状态错误，请检查，取消出错。" % obj.express_id, "error")
             self.message_user("成功驳回 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
                               'success')
         return None
@@ -113,14 +113,14 @@ class RejectSelectedAction(BaseActionView):
 
 
 class DepartmentInfoAdmin(object):
-    list_display = ['name', 'order_status', 'category', 'create_time', 'creator']
-    list_filter = ['category']
+    list_display = ['name', 'order_status', 'centre', 'category', 'create_time', 'creator']
+    list_filter = ['category', 'centre__name']
     search_fields = ['name']
     form_layout = [
         Fieldset('必填信息',
-                 'name', 'order_status', 'category'),
+                 'name', 'centre', 'category'),
         Fieldset(None,
-                 'creator', 'is_delete', **{"style": "display:None"}),
+                 'creator', 'is_delete', 'order_status',  **{"style": "display:None"}),
     ]
     import_data = True
 
@@ -140,14 +140,17 @@ class DepartmentInfoAdmin(object):
         return super(DepartmentInfoAdmin, self).post(request, *args, **kwargs)
 
     def handle_upload_file(self, _file):
-        INIT_FIELDS_DIC = {'部门名称': 'name'}
+        INIT_FIELDS_DIC = {
+            '部门名称': 'name',
+            '部门ID': 'department_id'
+        }
         ALLOWED_EXTENSIONS = ['xls', 'xlsx']
         report_dic = {"successful": 0, "discard": 0, "false": 0, "repeated": 0, "error": []}
 
         if '.' in _file.name and _file.name.rsplit('.')[-1] in ALLOWED_EXTENSIONS:
             with pd.ExcelFile(_file) as xls:
                 df = pd.read_excel(xls, sheet_name=0)
-                FILTER_FIELDS = ['部门名称']
+                FILTER_FIELDS = ['部门名称', '部门ID']
 
                 try:
                     df = df[FILTER_FIELDS]
@@ -230,7 +233,7 @@ class DepartmentInfoAdmin(object):
             order = DepartmentInfo()  # 创建表格每一行为一个对象
             for k, v in row.items():
                 if re.match(r'^=', str(v)):
-                    row[k] = v.replace('=', '').replace('"', '')
+                    row[k] = v.replace('=', '').replace('"', '').replace(' ', '')
 
             name = str(row["name"])
             warehouse = DepartmentInfo.objects.filter(name=name)
@@ -239,13 +242,8 @@ class DepartmentInfoAdmin(object):
                 report_dic["error"].append('%s部门已经存在' % name)
                 continue
 
-            for k, v in row.items():
-                # 查询是否有这个字段属性，如果有就更新到对象。nan, NaT 是pandas处理数据时候生成的。
-                if hasattr(order, k):
-                    if str(v) in ['nan', 'NaT']:
-                        pass
-                    else:
-                        setattr(order, k, v)  # 更新对象属性为字典对应键值
+            order.name = name
+            order.department_id = row['department_id']
             try:
                 order.creator = self.request.user.username
                 order.save()
@@ -257,35 +255,9 @@ class DepartmentInfoAdmin(object):
         return report_dic
 
 
-
-
-class MyDepartmentAdmin(object):
-    list_display = ['name', 'order_status', 'category', 'create_time', 'creator']
-    list_filter = ['category']
-    search_fields = ['name']
-    form_layout = [
-        Fieldset('必填信息',
-                 'name', 'category'),
-        Fieldset(None,
-                 'create_time', 'order_status', 'creator', 'is_delete', **{"style": "display:None"}),
-    ]
-    readonly_fields = ['name', 'order_status', 'category', 'create_time', 'creator']
-    actions = [RejectSelectedAction]
-
-    def has_add_permission(self):
-        # 禁用添加按钮
-        return False
-
-    def queryset(self):
-        if self.request.user.department:
-            queryset = super(MyDepartmentAdmin, self).queryset()
-            queryset = queryset.filter(name=self.request.user.department.name)
-            return queryset
-        else:
-            self.message_user("{}没有设置部门，请设置部门再查询".format(self.request.user.username))
-            queryset = super(MyDepartmentAdmin, self).queryset().filter(order_status=9)
-            return queryset
+class CentreInfoAdmin(object):
+    list_display = ['name', 'category']
 
 
 xadmin.site.register(DepartmentInfo, DepartmentInfoAdmin)
-xadmin.site.register(MyDepartment, MyDepartmentAdmin)
+xadmin.site.register(CentreInfo, CentreInfoAdmin)

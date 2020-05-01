@@ -9,11 +9,11 @@ from django.db import models
 import django.utils.timezone as timezone
 
 from db.base_model import BaseModel
-from apps.base.department.models import DepartmentInfo
+from apps.base.department.models import CentreInfo
 from apps.base.goods.models import GoodsInfo
 from apps.base.company.models import CompanyInfo
 from apps.wms.stock.models import DeptStockInfo
-from apps.base.warehouse.models import WarehouseGeneral, WarehouseVirtual
+from apps.base.warehouse.models import WarehouseInfo, WarehouseVirtual
 
 
 class VAllotSOInfo(BaseModel):
@@ -37,12 +37,12 @@ class VAllotSOInfo(BaseModel):
         (0, '计划出库'),
         (1, '临时出库'),
     )
-    dept_stock = models.ForeignKey(DeptStockInfo, on_delete=models.CASCADE, verbose_name='源部门仓')
+    dept_stock = models.ForeignKey(DeptStockInfo, on_delete=models.CASCADE, verbose_name='源中心仓')
     order_id = models.CharField(max_length=50, unique=True, verbose_name='单据编号')
     order_category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='单据类型')
-    department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, verbose_name='部门')
-    warehouse = models.ForeignKey(WarehouseGeneral, on_delete=models.CASCADE, related_name='a_ware', verbose_name='仓库')
-    vwarehouse = models.ForeignKey(WarehouseVirtual, on_delete=models.CASCADE, related_name='a_vware', verbose_name='部门仓')
+    centre = models.ForeignKey(CentreInfo, on_delete=models.CASCADE, verbose_name='中心')
+    warehouse = models.ForeignKey(WarehouseInfo, on_delete=models.CASCADE, related_name='a_ware', verbose_name='仓库')
+    vwarehouse = models.ForeignKey(WarehouseVirtual, on_delete=models.CASCADE, related_name='a_vware', verbose_name='中心仓')
     goods_id = models.CharField(max_length=50, verbose_name='物料编码')
     goods_name = models.ForeignKey(GoodsInfo, on_delete=models.CASCADE, verbose_name='物料名称')
     quantity = models.IntegerField(verbose_name='分配总量')
@@ -111,15 +111,15 @@ class VAllotSIInfo(BaseModel):
     va_stockin = models.ForeignKey(VAllotSOInfo, on_delete=models.CASCADE, verbose_name='关联入库单')
     order_id = models.CharField(max_length=60, verbose_name='单据编号', unique=True, db_index=True)
     order_category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='单据类型')
-    ori_department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, related_name='ori_dept',
-                                       verbose_name='源部门')
-    ori_vwarehouse = models.ForeignKey(WarehouseVirtual, on_delete=models.CASCADE, related_name='ori_vware', verbose_name='源部门仓')
-    department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, verbose_name='目的部门')
+    ori_centre = models.ForeignKey(CentreInfo, on_delete=models.CASCADE, related_name='ori_centre',
+                                       verbose_name='源中心')
+    ori_vwarehouse = models.ForeignKey(WarehouseVirtual, on_delete=models.CASCADE, related_name='ori_vware', verbose_name='源中心仓')
+    centre = models.ForeignKey(CentreInfo, on_delete=models.CASCADE, verbose_name='目的中心')
     goods_id = models.CharField(max_length=60, verbose_name='物料编码', db_index=True)
     goods_name = models.ForeignKey(GoodsInfo, on_delete=models.CASCADE, verbose_name='物料名称')
     quantity = models.IntegerField(verbose_name='入库数量')
-    warehouse = models.ForeignKey(WarehouseGeneral, on_delete=models.CASCADE, related_name='asi_ware', verbose_name='仓库')
-    vwarehouse = models.ForeignKey(WarehouseVirtual, on_delete=models.CASCADE, related_name='asi_vware', verbose_name='目的部门仓')
+    warehouse = models.ForeignKey(WarehouseInfo, on_delete=models.CASCADE, related_name='asi_ware', verbose_name='仓库')
+    vwarehouse = models.ForeignKey(WarehouseVirtual, on_delete=models.CASCADE, related_name='asi_vware', verbose_name='目的中心仓')
     memorandum = models.CharField(max_length=300, null=True, blank=True, verbose_name='备注')
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='订单状态', db_index=True)
     mistake_tag = models.SmallIntegerField(choices=MISTAKE_TAG, default=0, verbose_name='错误标识')
@@ -134,7 +134,7 @@ class VAllotSIInfo(BaseModel):
 
 
 class VASICheck(VAllotSIInfo):
-    VERIFY_FIELD = ['order_category', 'department', 'quantity', 'va_stockin']
+    VERIFY_FIELD = ['order_category', 'centre', 'quantity', 'va_stockin']
 
     class Meta:
         verbose_name = 'oms-a-未审核部门入库单'

@@ -86,7 +86,7 @@ class AOCreateAction(BaseActionView):
 class VASOCheckInline(object):
     model = VASOCheck
     exclude = ['order_id', 'is_delete', 'creator', 'order_status', 'mistake_tag', 'is_delete', 'goods_id', 'goods_name',
-               'department', 'warehouse', 'vwarehouse', 'undistributed']
+               'warehouse', 'vwarehouse', 'undistributed', 'centre']
 
     extra = 1
     style = 'table'
@@ -128,28 +128,28 @@ class StockInfoAdmin(object):
             self.formsets[0].forms[i].instance.creator = request.user.username
             self.formsets[0].forms[i].instance.goods_name = self.org_obj.goods_name
             self.formsets[0].forms[i].instance.goods_id = self.org_obj.goods_id
-            department = self.formsets[0].forms[i].instance.department
-            vwarehouse = DeptToW.objects.filter(department=department)
+            centre = self.formsets[0].forms[i].instance.department.centre
+            vwarehouse = DeptToW.objects.filter(department=centre)
             if vwarehouse.exists():
                 self.formsets[0].forms[i].instance.vwarehouse = vwarehouse[0].warehouse
 
             else:
-                self.message_user("%s 没有设置部门关联的仓库。预分配生成失败" % department, "error")
+                self.message_user("%s 没有设置部门关联的仓库。预分配生成失败" % centre, "error")
                 continue
 
         super().save_related()
 
 
 class MyDeptStockAdmin(object):
-    list_display = ['department', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
+    list_display = ['centre', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
     list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name', 'order_status']
-    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'department',]
-    search_fields = ['goods_id', 'department__name']
+    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'centre',]
+    search_fields = ['goods_id', 'centre__name']
     relfield_style = 'fk-ajax'
 
     form_layout = [
         Fieldset('存货信息',
-                 'goods_name', 'vwarehouse', 'warehouse', 'quantity', 'department',),
+                 'goods_name', 'vwarehouse', 'warehouse', 'quantity', 'centre',),
         Fieldset('选填信息',
                  'memorandum'),
         Fieldset(None,
@@ -158,7 +158,7 @@ class MyDeptStockAdmin(object):
 
     def queryset(self):
         queryset = super(MyDeptStockAdmin, self).queryset()
-        _q_vwarehouse = DeptToVW.objects.filter(department=self.request.user.department)
+        _q_vwarehouse = DeptToVW.objects.filter(centre=self.request.user.department.centre)
         if _q_vwarehouse:
             vwarehouse = _q_vwarehouse[0].warehouse
             queryset = queryset.filter(is_delete=0, vwarehouse=vwarehouse)
@@ -169,12 +169,12 @@ class MyDeptStockAdmin(object):
 
 
 class TransDeptStockAdmin(object):
-    list_display = ['department', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum',
+    list_display = ['centre', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum',
                     'order_status']
     list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name',
                    'order_status']
     search_fields = ['goods_id', 'department__name']
-    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'department']
+    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'centre']
     inlines = [VASOCheckInline, ]
     actions = [AOCreateAction, ]
     list_editable = ['memorandum']
@@ -182,7 +182,7 @@ class TransDeptStockAdmin(object):
 
     form_layout = [
         Fieldset('存货信息',
-                 'goods_name', 'vwarehouse', 'department', 'warehouse', 'quantity', 'department',),
+                 'goods_name', 'vwarehouse', 'centre', 'warehouse', 'quantity'),
         Fieldset('选填信息',
                  'memorandum'),
         Fieldset(None,
@@ -214,7 +214,7 @@ class TransDeptStockAdmin(object):
             obj.creator = request.user.username
             obj.goods_name = self.org_obj.goods_name
             obj.goods_id = self.org_obj.goods_id
-            obj.department = self.org_obj.department
+            obj.centre = self.org_obj.centre
             obj.warehouse = self.org_obj.warehouse
             obj.vwarehouse = self.org_obj.vwarehouse
             obj.undistributed = obj.quantity
@@ -223,15 +223,15 @@ class TransDeptStockAdmin(object):
 
 
 class DeptStockInfoAdmin(object):
-    list_display = ['department', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
+    list_display = ['centre', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
     list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name', 'order_status']
-    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'department',]
-    search_fields = ['goods_id', 'department__name']
+    readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'centre',]
+    search_fields = ['goods_id', 'centre__name']
     relfield_style = 'fk-ajax'
     inlines = [VASOCheckInline, ]
     form_layout = [
         Fieldset('存货信息',
-                 'goods_name', 'vwarehouse', 'warehouse', 'quantity', 'department',),
+                 'goods_name', 'vwarehouse', 'warehouse', 'quantity', 'centre',),
         Fieldset('选填信息',
                  'memorandum'),
         Fieldset(None,
@@ -253,12 +253,13 @@ class DeptStockInfoAdmin(object):
             obj.creator = request.user.username
             obj.goods_name = self.org_obj.goods_name
             obj.goods_id = self.org_obj.goods_id
-            obj.department = self.org_obj.department
+            obj.centre = self.org_obj.centre
             obj.warehouse = self.org_obj.warehouse
             obj.vwarehouse = self.org_obj.vwarehouse
             obj.undistributed = obj.quantity
 
         super().save_related()
+
 
 xadmin.site.register(StockInfo, StockInfoAdmin)
 xadmin.site.register(MyDeptStock, MyDeptStockAdmin)

@@ -9,7 +9,7 @@ from db.base_model import BaseModel
 from django.db import models
 
 from apps.base.company.models import MineInfo
-from apps.base.department.models import DepartmentInfo
+from apps.base.department.models import CentreInfo
 
 
 class PlatformInfo(BaseModel):
@@ -36,11 +36,10 @@ class ShopInfo(BaseModel):
         (1, '正常'),
     )
 
-    shop_name = models.CharField(unique=True, max_length=60, verbose_name='店铺名称')
+    name = models.CharField(unique=True, max_length=60, verbose_name='店铺名称')
     shop_id = models.CharField(unique=True, max_length=30, verbose_name='店铺ID', db_index=True)
-    platform = models.ForeignKey(PlatformInfo, on_delete=models.CASCADE, verbose_name='平台')
-    cs_name = models.CharField(max_length=30, verbose_name='对应客户')
-    department = models.ForeignKey(DepartmentInfo, on_delete=models.CASCADE, verbose_name='部门')
+    platform = models.ForeignKey(PlatformInfo, on_delete=models.CASCADE, verbose_name='平台', null=True, blank=True)
+    centre = models.ForeignKey(CentreInfo, on_delete=models.CASCADE, verbose_name='部门')
     company = models.ForeignKey(MineInfo, on_delete=models.SET_NULL, verbose_name='公司', null=True, blank=True)
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='单据状态')
 
@@ -50,5 +49,17 @@ class ShopInfo(BaseModel):
         db_table = 'base_shop_shop'
 
     def __str__(self):
-        return self.shop_name
+        return self.name
+
+
+    @classmethod
+    def verify_mandatory(cls, columns_key):
+        VERIFY_FIELD = ['name', 'shop_id', 'centre']
+
+        for i in VERIFY_FIELD:
+            if i not in columns_key:
+                return 'verify_field error, must have mandatory field: "{}""'.format(i)
+        else:
+            return None
+
 

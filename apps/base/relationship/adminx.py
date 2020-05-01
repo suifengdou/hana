@@ -17,7 +17,7 @@ from django.contrib.admin.utils import get_deleted_objects
 
 import xadmin
 from .models import DeptToW, DeptToVW
-from apps.base.department.models import DepartmentInfo
+from apps.base.department.models import CentreInfo
 from apps.base.warehouse.models import WarehouseInfo, WarehouseVirtual
 from xadmin.plugins.actions import BaseActionView
 from xadmin.views.base import filter_hook
@@ -28,12 +28,12 @@ ACTION_CHECKBOX_NAME = '_selected_action'
 
 
 class DeptToVWAdmin(object):
-    list_display = ['order_status', 'department', 'warehouse', 'create_time', 'creator']
+    list_display = ['order_status', 'centre', 'warehouse', 'create_time', 'creator']
     list_filter = ['order_status']
-    search_fields = ['department__name', 'warehouse__warehouse_name']
+    search_fields = ['centre__name', 'warehouse__warehouse_name']
     form_layout = [
         Fieldset('必填信息',
-                 'department', 'warehouse', 'order_status'),
+                 'centre', 'warehouse', 'order_status'),
         Fieldset(None,
                  'creator', 'is_delete', **{"style": "display:None"}),
     ]
@@ -57,7 +57,7 @@ class DeptToVWAdmin(object):
 
     def handle_upload_file(self, _file):
         INIT_FIELDS_DIC = {
-            '部门名称': 'department',
+            '中心名称': 'centre',
             '虚拟仓库': 'warehouse',
         }
         ALLOWED_EXTENSIONS = ['xls', 'xlsx']
@@ -66,7 +66,7 @@ class DeptToVWAdmin(object):
         if '.' in _file.name and _file.name.rsplit('.')[-1] in ALLOWED_EXTENSIONS:
             with pd.ExcelFile(_file) as xls:
                 df = pd.read_excel(xls, sheet_name=0)
-                FILTER_FIELDS = ['部门名称', '虚拟仓库']
+                FILTER_FIELDS = ['中心名称', '虚拟仓库']
 
                 try:
                     df = df[FILTER_FIELDS]
@@ -86,7 +86,8 @@ class DeptToVWAdmin(object):
                 # 验证一下必要的核心字段是否存在
                 _ret_verify_field = DeptToVW.verify_mandatory(columns_key)
                 if _ret_verify_field is not None:
-                    return _ret_verify_field
+                    report_dic['error'].append(_ret_verify_field)
+                    return report_dic
 
                 # 更改一下DataFrame的表名称
                 columns_key_ori = df.columns.values.tolist()
@@ -121,7 +122,9 @@ class DeptToVWAdmin(object):
                 # 直接调用验证函数进行验证
                 _ret_verify_field = DeptToVW.verify_mandatory(columns_key)
                 if _ret_verify_field is not None:
-                    return _ret_verify_field
+                    report_dic['error'].append(_ret_verify_field)
+                    return report_dic
+
                 # 验证通过进行重新处理。
                 columns_key_ori = piece.columns.values.tolist()
                 ret_columns_key = dict(zip(columns_key_ori, columns_key))
@@ -137,7 +140,8 @@ class DeptToVWAdmin(object):
             return report_dic
 
         else:
-            return "只支持excel和csv文件格式！"
+            report_dic['error'].append("只支持excel和csv文件格式")
+            return report_dic
 
     def save_resources(self, resource):
         # 设置初始报告
@@ -151,30 +155,29 @@ class DeptToVWAdmin(object):
                 if re.match(r'^=', str(v)):
                     row[k] = v.replace('=', '').replace('"', '')
 
-            department = str(row["department"])
-            q_department = DepartmentInfo.objects.filter(name=department)
-            if q_department.exists():
-                department = q_department[0]
+            centre = str(row["centre"])
+            q_centre = CentreInfo.objects.filter(name=centre)
+            if q_centre.exists():
+                order.centre = q_centre[0]
             else:
                 report_dic["false"] += 1
-                report_dic["error"].append('%s部门不存在' % department)
+                report_dic["error"].append('%s部门不存在' % centre)
                 continue
             vwarehouse = str(row['warehouse'])
             q_vwarehouse = WarehouseVirtual.objects.filter(warehouse_name=vwarehouse)
             if q_vwarehouse.exists():
-                warehouse = q_vwarehouse[0]
+                order.warehouse = q_vwarehouse[0]
             else:
                 report_dic["false"] += 1
                 report_dic["error"].append('%s仓库不存在' % vwarehouse)
                 continue
 
-            _repeate = DeptToVW.objects.filter(department=department, warehouse=warehouse)
+            _repeate = DeptToVW.objects.filter(centre=order.centre, warehouse=order.warehouse)
             if _repeate.exists():
                 report_dic["false"] += 1
-                report_dic["error"].append('%s部门已经关联过仓库%s' % (department, warehouse))
+                report_dic["error"].append('%s已经关联过仓库%s' % (centre, vwarehouse))
                 continue
-            order.department_id = department.id
-            order.warehouse_id = warehouse.id
+
             try:
                 order.creator = self.request.user.username
                 order.save()
@@ -194,12 +197,12 @@ class DeptToVWAdmin(object):
 
 
 class DeptToWAdmin(object):
-    list_display = ['order_status', 'department', 'warehouse', 'create_time', 'creator']
+    list_display = ['order_status', 'centre', 'warehouse', 'create_time', 'creator']
     list_filter = ['order_status']
-    search_fields = ['department__name', 'warehouse__warehouse_name']
+    search_fields = ['centre__name', 'warehouse__warehouse_name']
     form_layout = [
         Fieldset('必填信息',
-                 'department', 'warehouse', 'order_status'),
+                 'centre', 'warehouse', 'order_status'),
         Fieldset(None,
                  'creator', 'is_delete', **{"style": "display:None"}),
     ]
@@ -223,7 +226,7 @@ class DeptToWAdmin(object):
 
     def handle_upload_file(self, _file):
         INIT_FIELDS_DIC = {
-            '部门名称': 'department',
+            '中心名称': 'centre',
             '实物仓库': 'warehouse',
         }
         ALLOWED_EXTENSIONS = ['xls', 'xlsx']
@@ -232,7 +235,7 @@ class DeptToWAdmin(object):
         if '.' in _file.name and _file.name.rsplit('.')[-1] in ALLOWED_EXTENSIONS:
             with pd.ExcelFile(_file) as xls:
                 df = pd.read_excel(xls, sheet_name=0)
-                FILTER_FIELDS = ['部门名称', '实物仓库']
+                FILTER_FIELDS = ['中心名称', '实物仓库']
 
                 try:
                     df = df[FILTER_FIELDS]
@@ -317,30 +320,29 @@ class DeptToWAdmin(object):
                 if re.match(r'^=', str(v)):
                     row[k] = v.replace('=', '').replace('"', '')
 
-            department = str(row["department"])
-            q_department = DepartmentInfo.objects.filter(name=department)
+            centre = str(row["centre"])
+            q_department = CentreInfo.objects.filter(name=centre)
             if q_department.exists():
-                department = q_department[0]
+                order.department = q_department[0]
             else:
                 report_dic["false"] += 1
-                report_dic["error"].append('%s部门不存在' % department)
+                report_dic["error"].append('%s不存在' % centre)
                 continue
             warehouse = str(row['warehouse'])
             q_vwarehouse = WarehouseInfo.objects.filter(warehouse_name=warehouse)
             if q_vwarehouse.exists():
-                warehouse = q_vwarehouse[0]
+                order.warehouse = q_vwarehouse[0]
             else:
                 report_dic["false"] += 1
                 report_dic["error"].append('%s仓库不存在' % warehouse)
                 continue
 
-            _repeate = DeptToW.objects.filter(department=department, warehouse=warehouse)
+            _repeate = DeptToW.objects.filter(centre=order.centre, warehouse=order.warehouse)
             if _repeate.exists():
                 report_dic["false"] += 1
-                report_dic["error"].append('%s部门已经关联过仓库%s' % (department, warehouse))
+                report_dic["error"].append('%s已经关联过仓库%s' % (centre, warehouse))
                 continue
-            order.department_id = department.id
-            order.warehouse_id = warehouse.id
+
             try:
                 order.creator = self.request.user.username
                 order.save()
