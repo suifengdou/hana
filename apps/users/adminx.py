@@ -10,7 +10,7 @@ from xadmin import views
 
 class GlobalSettings(object):
     site_title = 'UT后台管理系统'
-    site_footer = 'UltraTool V0.5.1.31.1'
+    site_footer = 'UltraTool V0.5.1.32'
     menu_style = 'accordion'
 
 

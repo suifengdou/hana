@@ -159,7 +159,6 @@ class CovertSIAction(BaseActionView):
                         if check_quantity != current_stock.quantity:
                             self.message_user("单号%s不要重复点递交，多线程递交会造成程序错乱" % obj.order_id, "error")
                             n -= 1
-                            obj.mistake_tag = 2
                             obj.save()
                             continue
                         else:
@@ -194,7 +193,7 @@ class CovertSIAction(BaseActionView):
                                 stock_virtual.goods_name = obj.goods_name
                                 stock_virtual.goods_id = obj.goods_id
                                 stock_virtual.warehouse = obj.warehouse
-                                stock_virtual.department = obj.department
+                                stock_virtual.centre = obj.department.centre
                                 stock_virtual.vwarehouse = vwarehouse
                                 stock_virtual.quantity = obj.quantity_received
 
@@ -294,26 +293,40 @@ class FixVWAction(BaseActionView):
                         if obj.mistake_tag == 4:
                             self.log('change', '', obj)
 
-                            stock_virtual = DeptStockInfo()
+                            _q_stock_virtual = DeptStockInfo.objects.filter(centre=obj.department.centre,
+                                                                            goods_name=obj.goods_name,
+                                                                            warehouse=obj.warehouse,
+                                                                            vwarehouse=vwarehouse)
 
-                            fields_list = ['goods_name', 'goods_id', 'warehouse']
+                            if _q_stock_virtual.exists():
+                                stock_virtual = _q_stock_virtual[0]
+                                stock_virtual.quantity = stock_virtual.quantity + obj.quantity_received
+                                try:
+                                    stock_virtual.save()
+                                except Exception as e:
+                                    self.message_user("单号%s部门仓实例保存失败, 错误：%s" % (obj.order_id, e), "error")
+                                    n -= 1
+                                    obj.mistake_tag = 4
+                                    obj.save()
+                                    continue
+                            else:
+                                stock_virtual = DeptStockInfo()
+                                stock_virtual.goods_name = obj.goods_name
+                                stock_virtual.goods_id = obj.goods_id
+                                stock_virtual.warehouse = obj.warehouse
+                                stock_virtual.centre = obj.department.centre
+                                stock_virtual.vwarehouse = vwarehouse
+                                stock_virtual.quantity = obj.quantity_received
 
-                            for k in fields_list:
-                                if hasattr(obj, k):
-                                    setattr(stock_virtual, k, getattr(obj, k))  # 更新对象属性对应键值
-
-                            stock_virtual.centre = obj.department.centre
-                            stock_virtual.vwarehouse = vwarehouse
-                            stock_virtual.quantity = obj.quantity_received
-                            try:
-                                stock_virtual.creator = self.request.user.username
-                                stock_virtual.save()
-                            except Exception as e:
-                                self.message_user("单号%s部门仓实例保存失败, 错误：%s" % (obj.order_id, e), "error")
-                                n -= 1
-                                obj.mistake_tag = 4
-                                obj.save()
-                                continue
+                                try:
+                                    stock_virtual.creator = self.request.user.username
+                                    stock_virtual.save()
+                                except Exception as e:
+                                    self.message_user("单号%s部门仓实例保存失败, 错误：%s" % (obj.order_id, e), "error")
+                                    n -= 1
+                                    obj.mistake_tag = 4
+                                    obj.save()
+                                    continue
                             obj.order_status = 2
                             obj.quantity_linking = obj.quantity_received
                             obj.mistake_tag = 0
