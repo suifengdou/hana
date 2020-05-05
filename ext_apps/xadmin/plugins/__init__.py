@@ -30,7 +30,10 @@ PLUGINS = (
     'sortablelist',
 	'importexport',
     'excel',
-    'myeditable'
+    'myeditable',
+    'batchfilter',
+    'specialso',
+    'specialvasi'
 )
 
 

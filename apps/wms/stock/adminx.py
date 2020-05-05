@@ -65,7 +65,7 @@ class AOCreateAction(BaseActionView):
                     order_so.creator = self.request.user.username
                     order_so.goods_name = obj.goods_name
                     order_so.goods_id = obj.goods_id
-                    order_so.department = obj.department
+                    order_so.centre = obj.centre
                     order_so.warehouse = obj.warehouse
                     order_so.vwarehouse = obj.vwarehouse
                     order_so.undistributed = obj.quantity
@@ -111,6 +111,32 @@ class StockInfoAdmin(object):
         Fieldset(None,
                  'creator', 'order_status', 'is_delete', 'goods_id', **{"style": "display:None"}),
     ]
+    batch_data = True
+    delivery_ids = []
+
+    def post(self, request, *args, **kwargs):
+        delivery_ids = request.POST.get('ids', None)
+        if delivery_ids is not None:
+            if " " in delivery_ids:
+                delivery_ids = delivery_ids.split(" ")
+                for i in delivery_ids:
+                    if not re.match(r'^.{3,30}$', i):
+                        self.message_user('%s包含错误的货品编号，请检查' % str(delivery_ids), 'error')
+                        break
+
+                self.delivery_ids = delivery_ids
+                self.queryset()
+
+        return super(StockInfoAdmin, self).post(request, *args, **kwargs)
+
+    def queryset(self):
+        queryset = super(StockInfoAdmin, self).queryset()
+
+        if self.delivery_ids:
+            queryset = queryset.filter(is_delete=0, goods_id__in=self.delivery_ids)
+        else:
+            queryset = queryset.filter(is_delete=0)
+        return queryset
 
     def save_related(self):
 
@@ -155,16 +181,37 @@ class MyDeptStockAdmin(object):
         Fieldset(None,
                  'creator', 'order_status', 'is_delete', 'goods_id', **{"style": "display:None"}),
     ]
+    batch_data = True
+    delivery_ids = []
+
+    def post(self, request, *args, **kwargs):
+        delivery_ids = request.POST.get('ids', None)
+        if delivery_ids is not None:
+            if " " in delivery_ids:
+                delivery_ids = delivery_ids.split(" ")
+                for i in delivery_ids:
+                    if not re.match(r'^.{3,30}$', i):
+                        self.message_user('%s包含错误的货品编号，请检查' % str(delivery_ids), 'error')
+                        break
+
+                self.delivery_ids = delivery_ids
+                self.queryset()
+
+        return super(MyDeptStockAdmin, self).post(request, *args, **kwargs)
 
     def queryset(self):
         queryset = super(MyDeptStockAdmin, self).queryset()
         _q_vwarehouse = DeptToVW.objects.filter(centre=self.request.user.department.centre)
         if _q_vwarehouse:
             vwarehouse = _q_vwarehouse[0].warehouse
-            queryset = queryset.filter(is_delete=0, vwarehouse=vwarehouse)
         else:
             queryset = queryset.filter(id=0)
             self.message_user("没有设置部门，请联系管理员设置部门", "error")
+            return queryset
+        if self.delivery_ids:
+            queryset = queryset.filter(is_delete=0, goods_id__in=self.delivery_ids, vwarehouse=vwarehouse)
+        else:
+            queryset = queryset.filter(is_delete=0, vwarehouse=vwarehouse)
         return queryset
 
 
@@ -188,15 +235,85 @@ class TransDeptStockAdmin(object):
         Fieldset(None,
                  'creator', 'order_status', 'is_delete', 'goods_id', **{"style": "display:None"}),
     ]
+    batch_data = True
+    special_so = True
+    delivery_ids = []
+
+    def post(self, request, *args, **kwargs):
+        delivery_ids = request.POST.get('ids', None)
+        special_tag = request.POST.get('special_tag', None)
+        if special_tag:
+            _q_vwarehouse = WarehouseVirtual.objects.filter(warehouse_name='正品待分仓')
+            if _q_vwarehouse:
+                vwarehouse = _q_vwarehouse[0]
+                _q_warehouse = DeptToW.objects.all()
+                warehouse_list = [warehouse.warehouse for warehouse in _q_warehouse]
+                queryset = TransDeptStock.objects.filter(warehouse__in=warehouse_list, vwarehouse=vwarehouse)
+                n = queryset.count()
+                if n:
+                    i = 0
+                    for obj in queryset:
+                        if obj.quantity == 0:
+                            n -= 1
+                            continue
+                        i += 1
+                        self.log('change', '', obj)
+                        order_so = VASOCheck()
+
+                        prefix = "AO"
+                        serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":",
+                                                                                                               "").replace(
+                            ".", "")[:12]
+                        suffix = 1000 + i
+                        order_id = prefix + str(serial_number) + str(suffix)
+                        order_so.order_id = order_id
+
+                        order_so.creator = self.request.user.username
+                        order_so.goods_name = obj.goods_name
+                        order_so.goods_id = obj.goods_id
+                        order_so.centre = obj.centre
+                        order_so.warehouse = obj.warehouse
+                        order_so.vwarehouse = obj.vwarehouse
+                        order_so.undistributed = obj.quantity
+                        order_so.quantity = obj.quantity
+                        order_so.dept_stock = obj
+                        try:
+                            order_so.save()
+                        except Exception as e:
+                            self.message_user("%s 创建虚拟出库单出错, %s" % (obj.order_id, e), "error")
+                            continue
+
+                self.message_user("成功生成 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                                  'success')
+            else:
+                self.message_user("没有设置正品待分仓", "error")
+        if delivery_ids is not None:
+            if " " in delivery_ids:
+                delivery_ids = delivery_ids.split(" ")
+                for i in delivery_ids:
+                    if not re.match(r'^.{3,30}$', i):
+                        self.message_user('%s包含错误的货品编号，请检查' % str(delivery_ids), 'error')
+                        break
+
+                self.delivery_ids = delivery_ids
+                self.queryset()
+
+        return super(TransDeptStockAdmin, self).post(request, *args, **kwargs)
 
     def queryset(self):
         queryset = super(TransDeptStockAdmin, self).queryset()
         _q_vwarehouse = WarehouseVirtual.objects.filter(warehouse_name='正品待分仓')
         if _q_vwarehouse:
             vwarehouse = _q_vwarehouse[0]
-            queryset = queryset.filter(is_delete=0, vwarehouse=vwarehouse, quantity__gt=0).order_by('goods_id', '-quantity')
         else:
             queryset = queryset.filter(id=0)
+            self.message_user("没有设置正品待分仓", "error")
+            return queryset
+
+        if self.delivery_ids:
+            queryset = queryset.filter(is_delete=0, goods_id__in=self.delivery_ids, vwarehouse=vwarehouse)
+        else:
+            queryset = queryset.filter(is_delete=0, vwarehouse=vwarehouse)
         return queryset
 
     def save_related(self):
@@ -237,6 +354,32 @@ class DeptStockInfoAdmin(object):
         Fieldset(None,
                  'creator', 'order_status', 'is_delete', 'goods_id', **{"style": "display:None"}),
     ]
+    batch_data = True
+    delivery_ids = []
+
+    def post(self, request, *args, **kwargs):
+        delivery_ids = request.POST.get('ids', None)
+        if delivery_ids is not None:
+            if " " in delivery_ids:
+                delivery_ids = delivery_ids.split(" ")
+                for i in delivery_ids:
+                    if not re.match(r'^.{3,30}$', i):
+                        self.message_user('%s包含错误的货品编号，请检查' % str(delivery_ids), 'error')
+                        break
+
+                self.delivery_ids = delivery_ids
+                self.queryset()
+
+        return super(DeptStockInfoAdmin, self).post(request, *args, **kwargs)
+
+    def queryset(self):
+        queryset = super(DeptStockInfoAdmin, self).queryset()
+
+        if self.delivery_ids:
+            queryset = queryset.filter(is_delete=0, goods_id__in=self.delivery_ids)
+        else:
+            queryset = queryset.filter(is_delete=0)
+        return queryset
 
     def save_related(self):
 

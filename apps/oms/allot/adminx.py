@@ -24,7 +24,7 @@ from xadmin.layout import Fieldset
 
 from .models import VAllotSOInfo, VASOCheck, VASOHandle, VAllotSIInfo, VASICheck, VASIMine
 from apps.wms.stock.models import DeptStockInfo, StockInfo
-from apps.base.relationship.models import DeptToVW
+from apps.base.relationship.models import DeptToVW, DeptToW
 from apps.base.department.models import CentreInfo
 
 ACTION_CHECKBOX_NAME = '_selected_action'
@@ -259,11 +259,88 @@ class VASOHandleAdmin(object):
         Fieldset(None,
                  'mistake_tag', 'creator', 'order_status', 'is_delete', 'dept_stock', 'create_time', 'update_time', **{"style": "display:None"}),
     ]
+    batch_data = True
+    special_vasi = True
+    ids = []
+
+    def post(self, request, *args, **kwargs):
+        ids = request.POST.get('ids', None)
+        special_tag = request.POST.get('special_tag', None)
+        if special_tag:
+            _q_warehouse = DeptToW.objects.all()
+            warehouse_list = [warehouse.warehouse for warehouse in _q_warehouse]
+            queryset = VAllotSOInfo.objects.filter(order_status=2, warehouse__in=warehouse_list)
+            n = queryset.count()
+            if n:
+                i = 0
+                for obj in queryset:
+                    order_si = VAllotSIInfo()
+                    i += 1
+                    self.log('change', '', obj)
+                    prefix = "AI"
+                    serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":",
+                                                                                                           "").replace(
+                        ".", "")[:12]
+                    suffix = 1000 + i
+                    order_id = prefix + str(serial_number) + str(suffix)
+                    order_si.order_id = order_id
+                    _q_centre = DeptToW.objects.filter(warehouse=obj.warehouse)
+                    centre_num = _q_centre.count()
+                    if _q_centre.exists() and centre_num == 1:
+                        des_centre = _q_centre[0].centre
+                    else:
+                        self.message_user("%s 中心对应实仓出错, %s" % (obj.order_id, e), "error")
+                        obj.mistake_tag = 2
+                        obj.save()
+                        continue
+                    _q_vwarehouse = DeptToVW.objects.filter(centre=des_centre)
+                    if _q_vwarehouse.exists():
+                        des_vwarehouse = _q_vwarehouse[0].warehouse
+                    else:
+                        self.message_user("%s 部门对应中心仓出错, %s" % (obj.order_id, e), "error")
+                        obj.mistake_tag = 2
+                        obj.save()
+                        continue
+
+                    order_si.warehouse = obj.warehouse
+                    order_si.ori_vwarehouse = obj.vwarehouse
+                    order_si.ori_centre = obj.centre
+                    order_si.centre = des_centre
+                    order_si.vwarehouse = des_vwarehouse
+                    order_si.quantity = obj.quantity
+                    order_si.creator = request.user.username
+                    order_si.goods_name = obj.goods_name
+                    order_si.goods_id = obj.goods_id
+                    order_si.va_stockin = obj
+                    try:
+                        order_si.save()
+                    except Exception as e:
+                        self.message_user("%s 创建虚拟出库单出错, %s" % (obj.order_id, e), "error")
+                        continue
+
+                self.message_user("成功生成 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                                  'success')
+        if ids is not None:
+            if " " in ids:
+                ids = ids.split(" ")
+                for i in ids:
+                    if not re.match(r'^.{3,30}$', i):
+                        self.message_user('%s包含错误的货品编号，请检查' % str(ids), 'error')
+                        break
+
+                self.ids = ids
+                self.queryset()
+
+        return super(VASOHandleAdmin, self).post(request, *args, **kwargs)
 
     def queryset(self):
         queryset = super(VASOHandleAdmin, self).queryset()
         queryset.filter(is_delete=0, order_status=2, undistributed=0).update(order_status=3)
-        queryset = queryset.filter(is_delete=0, order_status=2)
+
+        if self.ids:
+            queryset = queryset.filter(is_delete=0, order_status=2, goods_id__in=self.ids)
+        else:
+            queryset = queryset.filter(is_delete=0, order_status=2)
         return queryset
 
     def save_related(self):

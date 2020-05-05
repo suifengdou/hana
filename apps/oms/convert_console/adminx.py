@@ -407,7 +407,9 @@ class CovertSOAction(BaseActionView):
                         obj.mistake_tag = 1
                         obj.save()
                         continue
-                    _q_stock_virtual = DeptStockInfo.objects.filter(department=obj.department, warehouse=obj.warehouse, goods_name=obj.goods_name)
+                    _q_stock_virtual = DeptStockInfo.objects.filter(centre=obj.department.centre,
+                                                                    warehouse=obj.warehouse,
+                                                                    goods_name=obj.goods_name)
                     if _q_stock_virtual.exists():
                         stock_virtual = _q_stock_virtual[0]
                         stock_virtual.quantity = stock_virtual.quantity - obj.quantity
@@ -437,7 +439,7 @@ class CovertSOAction(BaseActionView):
                             obj.save()
                             continue
                         stock = StockInfo.objects.filter(warehouse=obj.warehouse, goods_name=obj.goods_name)[0]
-                        if obj.department.category == 1:
+                        if obj.department.centre.category == 1:
                             stock.undistributed = stock.undistributed - obj.quantity
                             stock.quantity = stock.quantity - obj.quantity
                         else:
@@ -458,7 +460,8 @@ class CovertSOAction(BaseActionView):
                             if minuend > c_si.quantity_linking:
                                 minuend = minuend - c_si.quantity_linking
                                 c_si.quantity_linking = 0
-                                stocklist.si_order_id = str(c_si.order_id)
+                                stocklist.si_order_id = '{0}+{1}'.format(str(stocklist.si_order_id), str(c_si.order_id))
+                                stocklist.si_order_id = stocklist.si_order_id[:300]
                                 stocklist.save()
                                 c_si.save()
                             else:
