@@ -488,6 +488,17 @@ class CovertSOAction(BaseActionView):
         return None
 
 
+class AllotSOAction(BaseActionView):
+    action_name = "alllot_so_ori"
+    description = "自动匹配可用库存"
+    model_perm = 'change'
+    icon = "fa fa-check-square-o"
+
+    @filter_hook
+    def do_action(self, queryset):
+        return None
+
+
 # #####未审核出库调整单#####
 class CovertSOUnhandleAdmin(object):
     list_display = ['order_id', 'mistake_tag', 'order_status', 'customer', 'order_category', 'origin_order_category', 'origin_order_id',
