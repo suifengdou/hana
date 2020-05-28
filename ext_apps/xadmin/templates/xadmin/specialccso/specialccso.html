@@ -1,0 +1,17 @@
+{% load i18n %}
+<div class="btn-group export">
+  <a class="dropdown-toggle btn btn-default btn-sm" data-toggle="dropdown" href="#">
+    <i class="icon-share"></i> 快捷处理 <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+      <li>
+          <form method="post" action="">
+              {% csrf_token %}
+              <input type="hidden" name="special_tag" value='1'  id="submit_upload">
+              <button class="btn btn-success" type="submit" id="submit_upload_b"><i class="icon-share"></i>快速处理专属仓库调拨</button>
+          </form>
+      </li>
+
+      </li>
+  </ul>
+</div>

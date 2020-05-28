@@ -33,7 +33,8 @@ PLUGINS = (
     'myeditable',
     'batchfilter',
     'specialso',
-    'specialvasi'
+    'specialvasi',
+    'specialccso'
 )
 
 

@@ -321,9 +321,9 @@ class DeptToWAdmin(object):
                     row[k] = v.replace('=', '').replace('"', '')
 
             centre = str(row["centre"])
-            q_department = CentreInfo.objects.filter(name=centre)
-            if q_department.exists():
-                order.department = q_department[0]
+            q_centre = CentreInfo.objects.filter(name=centre)
+            if q_centre.exists():
+                order.centre = q_centre[0]
             else:
                 report_dic["false"] += 1
                 report_dic["error"].append('%s不存在' % centre)

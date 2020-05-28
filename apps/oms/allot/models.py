@@ -108,7 +108,7 @@ class VAllotSIInfo(BaseModel):
         (0, '计划入库'),
         (1, '临时入库'),
     )
-    va_stockin = models.ForeignKey(VAllotSOInfo, on_delete=models.CASCADE, verbose_name='关联入库单')
+    va_stockout = models.ForeignKey(VAllotSOInfo, on_delete=models.CASCADE, verbose_name='关联出库单')
     order_id = models.CharField(max_length=60, verbose_name='单据编号', unique=True, db_index=True)
     order_category = models.SmallIntegerField(choices=CATEGORY, default=0, verbose_name='单据类型')
     ori_centre = models.ForeignKey(CentreInfo, on_delete=models.CASCADE, related_name='ori_centre',

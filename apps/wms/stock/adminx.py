@@ -311,9 +311,9 @@ class TransDeptStockAdmin(object):
             return queryset
 
         if self.delivery_ids:
-            queryset = queryset.filter(is_delete=0, goods_id__in=self.delivery_ids, vwarehouse=vwarehouse)
+            queryset = queryset.filter(is_delete=0, goods_id__in=self.delivery_ids, vwarehouse=vwarehouse,  quantity__gt=0)
         else:
-            queryset = queryset.filter(is_delete=0, vwarehouse=vwarehouse)
+            queryset = queryset.filter(is_delete=0, vwarehouse=vwarehouse, quantity__gt=0)
         return queryset
 
     def save_related(self):
@@ -341,7 +341,7 @@ class TransDeptStockAdmin(object):
 
 class DeptStockInfoAdmin(object):
     list_display = ['centre', 'goods_name', 'goods_id', 'vwarehouse', 'warehouse', 'quantity', 'memorandum', 'order_status']
-    list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name', 'order_status']
+    list_filter = ['centre__name', 'goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name', 'order_status']
     readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'centre',]
     search_fields = ['goods_id', 'centre__name']
     relfield_style = 'fk-ajax'

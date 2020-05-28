@@ -27,6 +27,7 @@ from apps.base.warehouse.models import WarehouseVirtual, WarehouseInfo
 from apps.base.relationship.models import DeptToVW, DeptToW
 from apps.wms.stock.models import StockInfo, DeptStockInfo
 from apps.base.department.models import  CentreInfo
+from apps.oms.allot.models import VAllotSIInfo, VAllotSOInfo
 
 ACTION_CHECKBOX_NAME = '_selected_action'
 
@@ -488,14 +489,99 @@ class CovertSOAction(BaseActionView):
         return None
 
 
-class AllotSOAction(BaseActionView):
-    action_name = "alllot_so_ori"
-    description = "自动匹配可用库存"
+# 生成无货部门调拨单
+class CreateASOAction(BaseActionView):
+    action_name = "create_aso_ori"
+    description = "批量生成部门虚拟调拨出库"
     model_perm = 'change'
     icon = "fa fa-check-square-o"
 
+    modify_models_batch = False
+
     @filter_hook
     def do_action(self, queryset):
+        if not self.has_change_permission():
+            raise PermissionDenied
+        n = queryset.count()
+        if n:
+            if self.modify_models_batch:
+                self.log('change',
+                         '批量审核了 %(count)d %(items)s.' % {"count": n, "items": model_ngettext(self.opts, n)})
+                queryset.update(status=2)
+            else:
+                queryset = queryset.filter(mistake_tag__in=[2, 7])
+                if queryset.exists():
+
+                    goods_quantity = queryset.values('warehouse', 'goods_name').annotate(sum=Sum('quantity'))
+                    i = 0
+                    for quantity in goods_quantity:
+                        i += 1
+                        _q_entrepot = WarehouseVirtual.objects.filter(warehouse_name='正品待分仓')
+                        if _q_entrepot.exists():
+                            entrepot = _q_entrepot[0]
+                        else:
+                            self.message_user("系统不存在'正品待分仓'，请先创建该仓库 ", "error")
+                            break
+                        _q_stock = DeptStockInfo.objects.filter(vwarehouse=entrepot, warehouse_id=quantity['warehouse'], goods_name=quantity['goods_name'])
+                        if _q_stock.exists():
+                            _sum_quantity = _q_stock.values('goods_name').annotate(total=Sum('quantity'))
+                            if quantity['sum'] > _sum_quantity[0]['total']:
+                                self.message_user("可分配库存不足 %s" % quantity['goods_name'], "error")
+                                queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=8)
+                                n -= 1
+                                continue
+                            else:
+                                goods_quantity = quantity['sum']
+                                for stock in _q_stock:
+                                    i += 1
+                                    so_order = VAllotSOInfo()
+                                    so_order.dept_stock = stock
+                                    prefix = "AO"
+                                    serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ",
+                                                                                                          "").replace(
+                                        ":",
+                                        "").replace(
+                                        ".", "")[:12]
+                                    suffix = 1000 + i
+                                    order_id = prefix + str(serial_number) + str(suffix)
+                                    so_order.order_id = order_id
+                                    so_order.centre = stock.centre
+                                    so_order.warehouse = stock.warehouse
+                                    so_order.vwarehouse = stock.vwarehouse
+                                    so_order.goods_id = stock.goods_id
+                                    so_order.goods_name = stock.goods_name
+                                    so_order.creator = self.request.user.username
+
+                                    if stock.quantity >= goods_quantity:
+                                        so_order.quantity = goods_quantity
+                                        try:
+                                            so_order.save()
+                                            queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=10)
+                                            break
+                                        except Exception as e:
+                                            self.message_user("%s 生成虚拟出库单出错 " % stock.goods_id, "error")
+                                            queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=9)
+                                            break
+                                    else:
+                                        so_order.quantity = stock.quantity
+                                        goods_quantity -= stock.quantity
+                                    try:
+                                        so_order.save()
+                                        queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=10)
+                                    except Exception as e:
+                                        self.message_user("%s 生成虚拟出库单出错 " % stock.goods_id, "error")
+                                        queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=9)
+                                        break
+                        else:
+                            self.message_user("货品无足够可分配库存", "error")
+                            queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=8)
+
+                else:
+                    self.message_user("只支持部门仓无货情况的错误提示订单", "error")
+
+            self.message_user("成功提交 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                              'success')
+
         return None
 
 
@@ -507,8 +593,9 @@ class CovertSOUnhandleAdmin(object):
 
     list_filter = ['mistake_tag', 'order_status', 'order_category', 'department__name', 'goods_name__goods_name',
                    'warehouse__warehouse_name', 'goods_id', 'sale_organization',  'date']
-    actions = [CovertSOAction, ]
+    actions = [CovertSOAction, CreateASOAction]
     search_fields = ['order_id', 'origin_order_id']
+    special_ccso = True
 
     def queryset(self):
         queryset = super(CovertSOUnhandleAdmin, self).queryset()
@@ -518,6 +605,17 @@ class CovertSOUnhandleAdmin(object):
     def has_add_permission(self):
         # 禁用添加按钮
         return False
+
+    def post(self, request, *args, **kwargs):
+        special_tag = request.POST.get('special_tag', None)
+        if special_tag:
+            _q_scarce = CovertSO.objects.filter(order_status=1, mistake_tag__in=[2, 7], is_delete=0)
+            if _q_scarce.exists():
+                scarce_list = _q_scarce.values('department', 'warehouse', 'goods_id').annotate(sum=Sum('quantity'))
+                for goods in scarce_list:
+                    print(goods)
+
+        return super(CovertSOUnhandleAdmin, self).post(request, *args, **kwargs)
 
 
 # 出库调整单查询。
