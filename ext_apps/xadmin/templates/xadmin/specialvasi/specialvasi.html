@@ -11,5 +11,12 @@
               <button class="btn btn-success" type="submit" id="submit_upload_b"><i class="icon-share"></i>快速处理专属仓库</button>
           </form>
       </li>
+      <li>
+          <form method="post" action="">
+              {% csrf_token %}
+              <input type="hidden" name="special_tag" value='2'  id="submit_upload">
+              <button class="btn btn-success" type="submit" id="submit_upload_b"><i class="icon-share"></i>处理快捷调拨入库</button>
+          </form>
+      </li>
   </ul>
 </div>

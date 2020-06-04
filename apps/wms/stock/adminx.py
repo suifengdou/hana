@@ -220,7 +220,7 @@ class TransDeptStockAdmin(object):
                     'order_status']
     list_filter = ['goods_name__goods_name', 'goods_id', 'warehouse__warehouse_name', 'vwarehouse__warehouse_name',
                    'order_status']
-    search_fields = ['goods_id', 'department__name']
+    search_fields = ['goods_id', 'centre__name']
     readonly_fields = ['goods_name', 'goods_id', 'warehouse', 'vwarehouse', 'quantity', 'order_status', 'centre']
     inlines = [VASOCheckInline, ]
     actions = [AOCreateAction, ]

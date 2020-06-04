@@ -32,10 +32,12 @@ class VAllotSOInfo(BaseModel):
         (5, '保存实仓失败'),
         (6, '保存部门仓失败'),
         (7, '部门没有此货品'),
+        (8, '批量分拨订单')
     )
     CATEGORY = (
         (0, '计划出库'),
         (1, '临时出库'),
+
     )
     dept_stock = models.ForeignKey(DeptStockInfo, on_delete=models.CASCADE, verbose_name='源中心仓')
     order_id = models.CharField(max_length=50, unique=True, verbose_name='单据编号')
@@ -49,7 +51,7 @@ class VAllotSOInfo(BaseModel):
     undistributed = models.IntegerField(verbose_name='待分配数量')
     memorandum = models.CharField(null=True, blank=True, max_length=300, verbose_name='备注')
 
-    mistake_tag = models.SmallIntegerField(choices=ERROR_LIST, default=0, verbose_name='错误原因')
+    mistake_tag = models.SmallIntegerField(choices=ERROR_LIST, default=0, verbose_name='异常信息')
     order_status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='状态')
 
     class Meta:
@@ -101,12 +103,13 @@ class VAllotSIInfo(BaseModel):
         (3, '虚拟仓库存增加出错，需要联系管理员处理'),
         (4, '实仓可调拨库存数量错误'),
         (5, '查不到实仓可调拨货品'),
-        (5, '实仓可调拨保存错误'),
+        (6, '实仓可调拨保存错误'),
 
     )
     CATEGORY = (
         (0, '计划入库'),
         (1, '临时入库'),
+        (2, '快捷补货'),
     )
     va_stockout = models.ForeignKey(VAllotSOInfo, on_delete=models.CASCADE, verbose_name='关联出库单')
     order_id = models.CharField(max_length=60, verbose_name='单据编号', unique=True, db_index=True)

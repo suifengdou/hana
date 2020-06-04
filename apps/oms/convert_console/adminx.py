@@ -9,6 +9,7 @@ import datetime
 
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Sum, Avg, Min, Max
+from django.db.models.query import QuerySet
 from django.db import router
 from django.utils.encoding import force_text
 from django.template.response import TemplateResponse
@@ -511,8 +512,12 @@ class CreateASOAction(BaseActionView):
             else:
                 queryset = queryset.filter(mistake_tag__in=[2, 7])
                 if queryset.exists():
+                    try:
 
-                    goods_quantity = queryset.values('warehouse', 'goods_name').annotate(sum=Sum('quantity'))
+                        goods_quantity = queryset.values('warehouse', 'goods_name', 'department__centre').annotate(sum=Sum('quantity'))
+                    except Exception as e:
+                        self.message_user("设置错误 %s" % e, "error")
+                        return None
                     i = 0
                     for quantity in goods_quantity:
                         i += 1
@@ -550,26 +555,31 @@ class CreateASOAction(BaseActionView):
                                     so_order.vwarehouse = stock.vwarehouse
                                     so_order.goods_id = stock.goods_id
                                     so_order.goods_name = stock.goods_name
+                                    so_order.mistake_tag = 8
                                     so_order.creator = self.request.user.username
 
                                     if stock.quantity >= goods_quantity:
                                         so_order.quantity = goods_quantity
+                                        so_order.undistributed = goods_quantity
+                                        so_order.memorandum = {quantity['department__centre']: goods_quantity}
                                         try:
                                             so_order.save()
                                             queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=10)
                                             break
                                         except Exception as e:
-                                            self.message_user("%s 生成虚拟出库单出错 " % stock.goods_id, "error")
+                                            self.message_user("%s 生成虚拟出库单出错 " % e, "error")
                                             queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=9)
                                             break
                                     else:
                                         so_order.quantity = stock.quantity
+                                        so_order.undistributed = stock.quantity
                                         goods_quantity -= stock.quantity
+                                        so_order.memorandum = {quantity['department__centre']: stock.quantity}
                                     try:
                                         so_order.save()
                                         queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=10)
                                     except Exception as e:
-                                        self.message_user("%s 生成虚拟出库单出错 " % stock.goods_id, "error")
+                                        self.message_user("%s 生成虚拟出库单出错 " % e, "error")
                                         queryset.filter(goods_name_id=quantity['goods_name']).update(mistake_tag=9)
                                         break
                         else:

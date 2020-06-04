@@ -49,16 +49,32 @@ class RejectSelectedAction(BaseActionView):
         n = queryset.count()
         if n:
             for obj in queryset:
-                if obj.order_status > 0:
-                    obj.order_status -= 1
-                    obj.save()
-                    if obj.order_status == 0:
+                if isinstance(obj, VAllotSOInfo):
+                    if obj.order_status == 1:
+                        obj.order_status -= 1
+                        obj.save()
                         self.message_user("%s 取消成功" % obj.order_id, "success")
-                    else:
+                        continue
+                    if obj.order_status == 2 and obj.undistributed == obj.quantity:
+                        obj.order_status -= 1
+                        obj.save()
                         self.message_user("%s 驳回上一级成功" % obj.order_id, "success")
-                else:
-                    n -= 1
-                    self.message_user("%s 单据状态错误，请检查，驳回出错。" % obj.order_id, "error")
+                        continue
+                    else:
+                        n -= 1
+                        self.message_user("%s 单据状态错误，请检查，驳回出错。" % obj.order_id, "error")
+                        continue
+                elif isinstance(obj, VAllotSIInfo):
+                    if obj.order_status > 0:
+                        obj.order_status -= 1
+                        obj.save()
+                        if obj.order_status == 0:
+                            self.message_user("%s 取消成功" % obj.order_id, "success")
+                        else:
+                            self.message_user("%s 驳回上一级成功" % obj.order_id, "success")
+                    else:
+                        n -= 1
+                        self.message_user("%s 单据状态错误，请检查，驳回出错。" % obj.order_id, "error")
             self.message_user("成功驳回 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
                               'success')
         return None
@@ -189,7 +205,8 @@ class AOSubmitAction(BaseActionView):
                             continue
                         pass
                     obj.order_status = 2
-                    obj.mistake_tag = 0
+                    if obj.mistake_tag != 8:
+                        obj.mistake_tag = 0
                     try:
                         obj.save()
                     except Exception as e:
@@ -247,7 +264,7 @@ class VASOHandleAdmin(object):
     list_filter = ['order_status', 'mistake_tag', 'goods_name__goods_name', 'warehouse__warehouse_name',
                    'vwarehouse__warehouse_name', 'centre__name', 'goods_id', 'quantity']
     inlines = [VASICheckInline, ]
-    actions = []
+    actions = [RejectSelectedAction]
     readonly_fields = ['dept_stock', 'order_id', 'order_category', 'centre', 'goods_id', 'goods_name', 'quantity',
                        'undistributed', 'warehouse', 'vwarehouse', 'mistake_tag', 'order_status', 'is_delete',
                        'creator', 'create_time', 'update_time']
@@ -265,62 +282,121 @@ class VASOHandleAdmin(object):
     ids = []
 
     def post(self, request, *args, **kwargs):
+        report_dic = {"successful": 0, "discard": 0, "false": 0, "repeated": 0, "error": []}
         ids = request.POST.get('ids', None)
         special_tag = request.POST.get('special_tag', None)
         if special_tag:
-            _q_warehouse = DeptToW.objects.all()
-            warehouse_list = [warehouse.warehouse for warehouse in _q_warehouse]
-            queryset = VAllotSOInfo.objects.filter(order_status=2, warehouse__in=warehouse_list)
-            n = queryset.count()
-            if n:
+            if special_tag == '1':
+                _q_warehouse = DeptToW.objects.all()
+                warehouse_list = [warehouse.warehouse for warehouse in _q_warehouse]
+                queryset = VAllotSOInfo.objects.filter(order_status=2, warehouse__in=warehouse_list)
+                n = queryset.count()
+                if n:
+                    i = 0
+                    for obj in queryset:
+                        order_si = VAllotSIInfo()
+                        i += 1
+                        self.log('change', '', obj)
+                        prefix = "AI"
+                        serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":",
+                                                                                                               "").replace(
+                            ".", "")[:12]
+                        suffix = 1000 + i
+                        order_id = prefix + str(serial_number) + str(suffix)
+                        order_si.order_id = order_id
+                        _q_centre = DeptToW.objects.filter(warehouse=obj.warehouse)
+                        centre_num = _q_centre.count()
+                        if _q_centre.exists() and centre_num == 1:
+                            des_centre = _q_centre[0].centre
+                        else:
+                            obj.mistake_tag = 2
+                            obj.save()
+                            report_dic['error'].append("%s 中心对应实仓出错, %s" % (obj.order_id, e))
+                            report_dic['false'] += 1
+                            continue
+                        _q_vwarehouse = DeptToVW.objects.filter(centre=des_centre)
+                        if _q_vwarehouse.exists():
+                            des_vwarehouse = _q_vwarehouse[0].warehouse
+                        else:
+                            obj.mistake_tag = 2
+                            obj.save()
+                            report_dic['error'].append("%s 部门对应中心仓出错, %s" % (obj.order_id, e))
+                            report_dic['false'] += 1
+                            continue
+
+                        order_si.warehouse = obj.warehouse
+                        order_si.ori_vwarehouse = obj.vwarehouse
+                        order_si.ori_centre = obj.centre
+                        order_si.centre = des_centre
+                        order_si.vwarehouse = des_vwarehouse
+                        order_si.quantity = obj.quantity
+                        order_si.creator = request.user.username
+                        order_si.goods_name = obj.goods_name
+                        order_si.goods_id = obj.goods_id
+                        order_si.va_stockout = obj
+                        try:
+                            order_si.save()
+                            report_dic['successful'] += 1
+                        except Exception as e:
+                            report_dic['false'] += 1
+                            report_dic['error'].append(e)
+                            continue
+
+                    self.message_user("成功生成 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
+                                      'success')
+            elif special_tag == '2':
+
+                so_orders = VASOHandle.objects.filter(is_delete=0, mistake_tag=8)
                 i = 0
-                for obj in queryset:
-                    order_si = VAllotSIInfo()
-                    i += 1
-                    self.log('change', '', obj)
-                    prefix = "AI"
-                    serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":",
-                                                                                                           "").replace(
-                        ".", "")[:12]
-                    suffix = 1000 + i
-                    order_id = prefix + str(serial_number) + str(suffix)
-                    order_si.order_id = order_id
-                    _q_centre = DeptToW.objects.filter(warehouse=obj.warehouse)
-                    centre_num = _q_centre.count()
-                    if _q_centre.exists() and centre_num == 1:
-                        des_centre = _q_centre[0].centre
-                    else:
-                        self.message_user("%s 中心对应实仓出错, %s" % (obj.order_id, e), "error")
-                        obj.mistake_tag = 2
-                        obj.save()
-                        continue
-                    _q_vwarehouse = DeptToVW.objects.filter(centre=des_centre)
-                    if _q_vwarehouse.exists():
-                        des_vwarehouse = _q_vwarehouse[0].warehouse
-                    else:
-                        self.message_user("%s 部门对应中心仓出错, %s" % (obj.order_id, e), "error")
-                        obj.mistake_tag = 2
-                        obj.save()
-                        continue
+                if so_orders:
 
-                    order_si.warehouse = obj.warehouse
-                    order_si.ori_vwarehouse = obj.vwarehouse
-                    order_si.ori_centre = obj.centre
-                    order_si.centre = des_centre
-                    order_si.vwarehouse = des_vwarehouse
-                    order_si.quantity = obj.quantity
-                    order_si.creator = request.user.username
-                    order_si.goods_name = obj.goods_name
-                    order_si.goods_id = obj.goods_id
-                    order_si.va_stockout = obj
-                    try:
-                        order_si.save()
-                    except Exception as e:
-                        self.message_user("%s 创建虚拟入库单出错, %s" % (obj.order_id, e), "error")
-                        continue
+                    for order in so_orders:
+                        i += 1
+                        si_order = VAllotSIInfo()
+                        try:
+                            for k, v in eval(order.memorandum).items():
+                                si_order.centre_id = k
+                                _q_vwarehouse = DeptToVW.objects.filter(centre_id=k, is_delete=0)
+                                if _q_vwarehouse:
+                                    si_order.vwarehouse = _q_vwarehouse[0].warehouse
+                                else:
+                                    self.message_user('%s 入库部门仓库出错' % order.order_id, 'error')
+                                    order.mistake_tag = 4
+                                    order.save()
+                                    report_dic['false'] += 1
+                                    continue
+                                si_order.quantity = v
+                        except Exception as e:
+                            report_dic['error'].append('%s备注格式不对，单据出错' % str(order.order_id))
+                            report_dic['false'] += 1
+                            continue
+                        prefix = "AI"
+                        serial_number = str(datetime.datetime.now()).replace("-", "").replace(" ", "").replace(":",
+                                                                                                               "").replace(
+                            ".", "")[:12]
+                        suffix = 1000 + i
+                        order_id = prefix + str(serial_number) + str(suffix)
+                        si_order.order_id = order_id
+                        si_order.order_category = 2
+                        si_order.ori_centre = order.centre
+                        si_order.ori_vwarehouse = order.vwarehouse
+                        si_order.goods_id = order.goods_id
+                        si_order.goods_name = order.goods_name
+                        si_order.warehouse = order.warehouse
+                        si_order.va_stockout = order
+                        try:
+                            si_order.creator = request.user.username
+                            si_order.save()
+                            report_dic['successful'] += 1
 
-                self.message_user("成功生成 %(count)d %(items)s." % {"count": n, "items": model_ngettext(self.opts, n)},
-                                  'success')
+                        except Exception as e:
+                            order.mistake_tag = 3
+                            order.save()
+                            report_dic['false'] += 1
+                            report_dic['error'].append(e)
+
+        if report_dic:
+            self.message_user(report_dic, 'info')
         if ids is not None:
             if " " in ids:
                 ids = ids.split(" ")
